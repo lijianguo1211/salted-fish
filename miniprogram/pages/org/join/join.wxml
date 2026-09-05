@@ -1,0 +1,10 @@
+<view class="tab-page">
+  <view class="card">
+    <view class="title">输入邀请码</view>
+    <view class="muted">向组织管理员索取邀请码，提交后等待对方审核。</view>
+    <input class="code-input" placeholder="例如 DEMO2026" value="{{code}}" bindinput="onCode" maxlength="16" />
+  </view>
+  <view class="actions">
+    <button class="btn-primary" bindtap="submit">申请加入</button>
+  </view>
+</view>

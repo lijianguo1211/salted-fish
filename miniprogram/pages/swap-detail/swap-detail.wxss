@@ -1,0 +1,34 @@
+.swap-page { padding-bottom: 160rpx; }
+.status { display: inline-block; font-size: 26rpx; padding: 8rpx 20rpx; border-radius: 26rpx; font-weight: 600; }
+.status-pending_parent, .status-pending_peer { background: #E7F6F0; color: #54C7A5; }
+.status-accepted { background: #DCEFE8; color: #2C9B80; }
+.status-completed { background: #DCEFF6; color: #2C9B80; }
+.status-cancelled { background: #F0EAE3; color: #9A8F86; }
+
+.pair { display: flex; align-items: center; justify-content: center; margin-top: 30rpx; }
+.p-img {
+  width: 170rpx; height: 170rpx; background: #E7F6F0; border-radius: 20rpx;
+  display: flex; align-items: center; justify-content: center; font-size: 80rpx;
+}
+.p-arrow { font-size: 48rpx; color: #54C7A5; margin: 0 30rpx; }
+.pair-names { display: flex; justify-content: space-around; margin-top: 16rpx; }
+.p-name { font-size: 28rpx; font-weight: 600; width: 42%; text-align: center; }
+.pair-owners { display: flex; justify-content: space-around; margin-top: 8rpx; }
+.note { margin-top: 20rpx; background: #EAF8F3; padding: 16rpx; border-radius: 12rpx; font-size: 26rpx; }
+
+.steps { margin-top: 20rpx; }
+.step { display: flex; align-items: flex-start; margin-bottom: 24rpx; }
+.step-dot {
+  width: 44rpx; height: 44rpx; border-radius: 50%; margin-right: 20rpx;
+  display: flex; align-items: center; justify-content: center; font-size: 30rpx;
+}
+.step-ok .step-dot { background: #54C7A5; color: #fff; }
+.step-wait .step-dot { background: #EFE9E1; color: #B0A69C; }
+.step-body { flex: 1; }
+.step-title { font-size: 28rpx; }
+.step-time { font-size: 22rpx; color: #B0A69C; margin-top: 6rpx; }
+
+.action-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; background: #fff;
+  padding: 20rpx 24rpx; box-shadow: 0 -6rpx 20rpx rgba(0,0,0,0.05);
+}

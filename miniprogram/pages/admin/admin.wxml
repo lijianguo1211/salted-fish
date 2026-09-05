@@ -1,0 +1,105 @@
+<view class="tab-page">
+  <!-- 顶部分段：举报处理 / 分类管理 -->
+  <view class="seg tabs">
+    <view class="seg-item {{tab === 'reports' ? 'active' : ''}}"
+          bindtap="switchTab" data-tab="reports">举报处理
+      <text wx:if="{{pendingCount}}" class="seg-badge">{{pendingCount}}</text>
+    </view>
+    <view class="seg-item {{tab === 'categories' ? 'active' : ''}}"
+          bindtap="switchTab" data-tab="categories">分类管理</view>
+  </view>
+
+  <!-- ================= 举报处理 ================= -->
+  <block wx:if="{{tab === 'reports'}}">
+    <view class="page-head">
+      <view class="head-title">举报处理</view>
+      <view class="head-sub">共 {{pendingCount}} 条待处理 · 审核不合适内容，保护小市场安全 🌱</view>
+    </view>
+
+    <view class="card" wx:for="{{reports}}" wx:key="id">
+      <view class="rep-top">
+        <view class="rep-title">{{item.item ? item.item.name : '（物品已删除）'}}</view>
+        <view class="chip rep-status">{{item.statusText}}</view>
+      </view>
+      <view class="rep-meta">
+        <text>物主：{{item.item.owner || '?'}} · {{item.item.owner_class || ''}}</text>
+      </view>
+      <view class="rep-reason">理由：{{item.reason}}</view>
+      <view class="rep-note" wx:if="{{item.reporter_note}}">补充：{{item.reporter_note}}</view>
+
+      <view class="rep-time">{{item.created_at}} · {{item.reporter_name}} 上报</view>
+
+      <view class="rep-actions">
+        <button class="btn-outline" catchtap="rejectReport" data-id="{{item.id}}">驳回</button>
+        <button class="btn-danger" catchtap="removeReport" data-id="{{item.id}}">下架</button>
+      </view>
+    </view>
+
+    <view wx:if="{{!reports.length}}" class="empty">
+      <view class="empty-emoji">🛡️</view>
+      <view>暂无待处理举报，小市场很干净</view>
+    </view>
+  </block>
+
+  <!-- ================= 分类管理 ================= -->
+  <block wx:elif="{{tab === 'categories'}}">
+    <view class="page-head cat-head">
+      <view>
+        <view class="head-title">闲置分类</view>
+        <view class="head-sub">分类存数据库，可增删改、排序、启停。停用后发布时不可选 🌿</view>
+      </view>
+      <button class="btn-primary add-cat-btn" bindtap="openCatAdd">＋ 新增</button>
+    </view>
+
+    <view class="card cat-item" wx:for="{{categories}}" wx:key="id">
+      <view class="cat-idx">{{item.idx}}</view>
+      <view class="cat-main">
+        <view class="cat-name">
+          {{item.name}}
+          <text class="chip {{item.is_active ? 'ok' : 'off'}}">{{item.statusText}}</text>
+        </view>
+        <view class="cat-meta">估值基准 {{item.value_base}} 枚 · 排序 {{item.sort_order}} · {{item.note || '无说明'}}</view>
+      </view>
+      <view class="cat-ops">
+        <button class="btn-outline sm" catchtap="openCatEdit" data-cat="{{item}}">编辑</button>
+        <button class="btn-danger sm" catchtap="deleteCat" data-cat="{{item}}">删除</button>
+      </view>
+    </view>
+
+    <view wx:if="{{!categories.length}}" class="empty">
+      <view class="empty-emoji">🏷️</view>
+      <view>还没有分类，点右上角「新增」添加</view>
+    </view>
+  </block>
+
+  <!-- 分类编辑 / 新增 弹层 -->
+  <view class="mask" wx:if="{{catFormShow}}" catchtap="closeCatForm">
+    <view class="sheet" catchtap="onCatKeep">
+      <view class="sheet-title">{{catId ? '编辑分类' : '新增分类'}}</view>
+      <view class="form-row">
+        <text class="form-label">分类名</text>
+        <input class="form-input" placeholder="如：奥特曼卡 / 玩具" value="{{catName}}" bindinput="onCatName" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">估值基准(枚)</text>
+        <input class="form-input num" type="number" value="{{catCoins}}" bindinput="onCatCoins" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">排序</text>
+        <input class="form-input num" type="number" value="{{catOrder}}" bindinput="onCatOrder" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">说明</text>
+        <input class="form-input" placeholder="可选" value="{{catNote}}" bindinput="onCatNote" />
+      </view>
+      <view class="form-row switch-row">
+        <text class="form-label">启用</text>
+        <switch checked="{{catActive}}" bindchange="toggleCatActive" color="#54C7A5" />
+      </view>
+      <view class="sheet-actions">
+        <button class="btn-outline" bindtap="closeCatForm">取消</button>
+        <button class="btn-primary" bindtap="saveCat" disabled="{{catSubmitting}}">保存</button>
+      </view>
+    </view>
+  </view>
+</view>

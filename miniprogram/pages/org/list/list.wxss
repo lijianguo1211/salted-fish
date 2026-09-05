@@ -1,0 +1,15 @@
+.tip .title { margin-bottom: 8rpx; }
+.org-row {
+  display: flex;
+  align-items: center;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #E8F3EE;
+}
+.org-row:last-child { border-bottom: none; }
+.org-row.on { background: #F3FBF7; margin: 0 -16rpx; padding-left: 16rpx; padding-right: 16rpx; border-radius: 16rpx; }
+.org-name { font-weight: 600; font-size: 30rpx; }
+.grow { flex: 1; }
+.arrow { color: #8FA49C; }
+.chip.gray { background: #EEF2F0; color: #6B7C75; }
+.chip.red { background: #FDECEC; color: #E5484D; }
+.actions { padding: 24rpx; display: flex; flex-direction: column; gap: 20rpx; }

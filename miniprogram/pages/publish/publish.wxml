@@ -1,0 +1,61 @@
+<view class="publish-page">
+  <!-- 照片 -->
+  <view class="card">
+    <view class="title">📷 给闲置拍张照</view>
+    <view class="photo-row">
+      <view class="photo {{imgs.length?'':'photo-empty'}}" wx:for="{{imgs}}" wx:key="index">
+        <image class="photo-img" src="{{item}}" mode="aspectFill" data-index="{{index}}"
+               bindtap="previewPhoto" />
+        <view class="photo-del" data-index="{{index}}" catchtap="delPhoto">×</view>
+      </view>
+      <view class="photo-add" wx:if="{{imgs.length < 3}}" bindtap="choosePhoto">＋</view>
+    </view>
+    <view class="muted tip">最多 3 张 · 展示成色，交换更顺手</view>
+  </view>
+
+  <!-- 基本信息 -->
+  <view class="card">
+    <view class="title">📝 基本信息</view>
+    <input class="input" placeholder="物品名称，例如：闪耀奥特曼卡 HR"
+           value="{{name}}" bindinput="onName" />
+    <picker mode="selector" range="{{cats}}" value="{{catIndex}}" bindchange="onCat">
+      <view class="picker">类别：{{cats[catIndex]||'请选择'}} ▾</view>
+    </picker>
+    <view class="conditions">
+      <text class="cond {{condition===c?'cond-on':''}}" wx:for="{{conditions}}" wx:key="*this"
+            bindtap="setCondition" data-c="{{item}}">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- AI 估价 -->
+  <view class="card" wx:if="{{name}}">
+    <view class="title space-between">
+      <text>🤖 AI 估值参考</text>
+      <view class="val-btn" wx:if="{{!aiResult}}" bindtap="aiEstimate">一键估价</view>
+      <view class="val-btn val-ing" wx:elif="{{aiResult}}">已估值</view>
+    </view>
+    <view class="ai-result" wx:if="{{aiResult}}">
+      <view class="ai-num">🐟 {{aiResult.suggested_coins}}</view>
+    </view>
+    <view class="ai-expl" wx:if="{{aiResult}}">{{aiResult.explanation}}</view>
+    <view class="suggestion" wx:if="{{aiResult}}">可手动调到任意枚数（仅作交换参考，不是价格）</view>
+    <view class="stepper" wx:if="{{aiResult}}">
+      <view class="step-btn" bindtap="decCoins">−</view>
+      <view class="step-num">🐟 {{coins}}</view>
+      <view class="step-btn" bindtap="incCoins">＋</view>
+    </view>
+  </view>
+
+  <!-- 想换什么 -->
+  <view class="card">
+    <view class="title">🔄 我想换</view>
+    <input class="input" placeholder="例如：任何奥特曼卡 / 恐龙绘本 / 都行"
+           value="{{wantTagsText}}" bindinput="onWant"/>
+    <view class="muted tip">填多个用顿号（、）分隔</view>
+  </view>
+
+  <!-- 提交 -->
+  <view class="submit-bar">
+    <button class="btn-primary" bindtap="submit">上架闲置 ＋2 咸鱼币</button>
+  </view>
+</view>

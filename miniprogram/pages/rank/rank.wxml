@@ -1,0 +1,47 @@
+<view class="tab-page">
+  <view class="rank-head">
+    <view class="rank-title">🏆 咸鱼币明星榜</view>
+    <view class="rank-sub">换得越多，环保越棒。排行榜只给荣誉，不兑现金。</view>
+  </view>
+
+  <!-- 前三领奖台 -->
+  <view class="podium" wx:if="{{podium.length}}">
+    <view class="pod pod-2" wx:if="{{podium[1]}}">
+      <view class="pod-medal">🥈</view>
+      <view class="pod-avatar">{{podium[1].avatar || '🙂'}}</view>
+      <view class="pod-name">{{podium[1].rank}}.{{podium[1].nickname}}</view>
+      <view class="pod-coins">🐟 {{podium[1].coin_balance}}</view>
+      <view class="pod-bar" style="height:80rpx"></view>
+    </view>
+    <view class="pod pod-1" wx:if="{{podium[0]}}">
+      <view class="pod-medal">🥇</view>
+      <view class="pod-avatar big">{{podium[0].avatar || '🙂'}}</view>
+      <view class="pod-name">{{podium[0].rank}}.{{podium[0].nickname}}</view>
+      <view class="pod-coins">🐟 {{podium[0].coin_balance}}</view>
+      <view class="pod-bar" height="140rpx"></view>
+    </view>
+    <view class="pod pod-3" wx:if="{{podium[2]}}">
+      <view class="pod-medal">🥉</view>
+      <view class="pod-avatar">{{podium[2].avatar || '🙂'}}</view>
+      <view class="pod-name">{{podium[2].rank}}.{{podium[2].nickname}}</view>
+      <view class="pod-coins">🐟 {{podium[2].coin_balance}}</view>
+      <view class="pod-bar" style="height:60rpx"></view>
+    </view>
+  </view>
+
+  <!-- 榜单列表 -->
+  <view class="list" wx:if="{{rest.length}}">
+    <view class="row-item {{me && item.id === me.id ? 'me':''}}" wx:for="{{rest}}" wx:key="index">
+      <view class="rank-num">{{item.rank}}</view>
+      <view class="avatar">{{item.avatar || '🙂'}}</view>
+      <view class="r-info">
+        <view class="r-name">{{item.nickname}}</view>
+        <view class="muted">{{item.grade_class}}</view>
+      </view>
+      <view class="coin-badge">🐟 {{item.coin_balance}}</view>
+    </view>
+  </view>
+  <view wx:elif="{{loaded}}" class="empty">还没有人上榜，快去交换攒咸鱼币吧</view>
+
+  <view class="foot-note">咸鱼币是积分，不可兑换现金、不可购买任何商品 🤝</view>
+</view>

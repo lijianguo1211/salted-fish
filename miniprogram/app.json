@@ -1,0 +1,58 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/org/list/list",
+    "pages/index/index",
+    "pages/swap-list/swap-list",
+    "pages/rank/rank",
+    "pages/mine/mine",
+    "pages/publish/publish",
+    "pages/item-detail/item-detail",
+    "pages/swap-detail/swap-detail",
+    "pages/org/apply/apply",
+    "pages/org/join/join",
+    "pages/org/manage/manage",
+    "pages/admin/admin"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#54C7A5",
+    "navigationBarTitleText": "咸鱼小市场",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F7FCF9",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8FA49C",
+    "selectedColor": "#54C7A5",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "鱼塘",
+        "iconPath": "images/fish.png",
+        "selectedIconPath": "images/fish-active.png"
+      },
+      {
+        "pagePath": "pages/swap-list/swap-list",
+        "text": "交换",
+        "iconPath": "images/swap.png",
+        "selectedIconPath": "images/swap-active.png"
+      },
+      {
+        "pagePath": "pages/rank/rank",
+        "text": "排行",
+        "iconPath": "images/rank.png",
+        "selectedIconPath": "images/rank-active.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "images/mine.png",
+        "selectedIconPath": "images/mine-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,49 @@
+<view class="tab-page">
+  <view class="card tip" wx:if="{{!activeOrgId}}">
+    <view class="title">先加入一个组织</view>
+    <view class="muted">鱼塘按小区/学校隔离。请申请创建，或输入邀请码加入。</view>
+  </view>
+
+  <view class="card" wx:if="{{activeMembers.length}}">
+    <view class="title">可进入的组织</view>
+    <view class="org-row {{activeOrgId===item.org_id?'on':''}}"
+          wx:for="{{activeMembers}}" wx:key="id"
+          data-id="{{item.org_id}}" bindtap="switchOrg">
+      <view class="grow">
+        <view class="org-name">{{item.org_name}}</view>
+        <view class="muted">{{item.orgTypeText}} · {{item.roleText}}</view>
+      </view>
+      <text class="chip" wx:if="{{activeOrgId===item.org_id}}">当前</text>
+      <text class="arrow" wx:else>进入 ›</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{pendingMembers.length}}">
+    <view class="title">待审核加入</view>
+    <view class="org-row" wx:for="{{pendingMembers}}" wx:key="id">
+      <view class="grow">
+        <view class="org-name">{{item.org_name}}</view>
+        <view class="muted">等待组织管理员审核</view>
+      </view>
+      <text class="chip gray">审核中</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{created.length}}">
+    <view class="title">我申请创建的</view>
+    <view class="org-row" wx:for="{{created}}" wx:key="id"
+          data-id="{{item.id}}" data-status="{{item.status}}" bindtap="onCreatedTap">
+      <view class="grow">
+        <view class="org-name">{{item.name}}</view>
+        <view class="muted">{{item.statusText}}{{item.reject_reason ? ' · ' + item.reject_reason : ''}}</view>
+      </view>
+      <text class="chip {{item.status==='approved'?'':(item.status==='rejected'?'red':'gray')}}">{{item.statusText}}</text>
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="btn-primary" bindtap="goJoin">输入邀请码加入</button>
+    <button class="btn-outline" bindtap="goApply">申请创建组织</button>
+    <button class="btn-outline" wx:if="{{activeOrgId}}" bindtap="goFish">进入鱼塘</button>
+  </view>
+</view>

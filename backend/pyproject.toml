@@ -1,0 +1,21 @@
+[project]
+name = "salted-fish-backend"
+version = "0.1.0"
+description = "咸鱼小市场 FastAPI 后端（以物换物 · 家长双确认 · 咸鱼币积分）"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "sqlalchemy>=2.0",
+    "pydantic>=2.6",
+    "httpx>=0.27",
+    "python-multipart>=0.0.9",   # /upload 文件上传
+    "python-dotenv>=1.0",        # .env 配置加载
+    "cryptography>=42.0",        # 独立后台登录：RSA-OAEP 非对称加密传输密码
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

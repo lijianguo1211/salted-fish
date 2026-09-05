@@ -1,0 +1,79 @@
+<view class="tab-page">
+  <!-- 顶部欢迎 + 搜索 -->
+  <view class="header">
+    <view class="header-top">
+      <view>
+        <view class="hi">👋 你好，{{user?user.nickname:'小咸鱼'}}</view>
+        <view class="hi-sub org-switch" bindtap="goOrgs">📍 {{orgName}} · 切换组织 ›</view>
+      </view>
+      <view class="coin-badge" wx:if="{{user}}">🐟 {{user.coin_balance}} 咸鱼币</view>
+    </view>
+    <view class="search-bar" bindtap="goSearch">
+      <text class="search-ico">🔍</text>
+      <text class="search-ph">搜索闲置，例如「奥特曼」「绘本」</text>
+    </view>
+  </view>
+
+  <!-- 分类筛选 -->
+  <scroll-view class="cats" scroll-x>
+    <view class="cat {{activeCat===''?'cat-on':''}}" bindtap="setCat" data-cat="">全部</view>
+    <view class="cat {{activeCat===c?'cat-on':''}}" wx:for="{{cats}}" wx:key="*this"
+          bindtap="setCat" data-cat="{{item}}">{{item}}</view>
+  </scroll-view>
+
+  <!-- 闲置列表 -->
+  <view class="list" wx:if="{{items.length}}">
+    <view class="item-card" wx:for="{{items}}" wx:key="id" bindtap="openItem" data-id="{{item.id}}">
+      <image wx:if="{{item.images.length}}" class="item-img" src="{{item.images[0]}}" mode="aspectFill" />
+      <view wx:else class="item-img">{{item.emoji}}</view>
+      <view class="item-main">
+        <view class="item-name">{{item.name}}</view>
+        <view class="item-tags">
+          <text class="chip">新旧 {{item.condition}}</text>
+          <text class="chip">{{item.owner_class}}</text>
+        </view>
+        <view class="item-want">想换：{{item.want_tags_text}}</view>
+        <view class="item-foot">
+          <text class="coin-badge">🐟 {{item.value_coins}}</text>
+          <text class="item-owner">{{item.owner}}</text>
+          <text wx:if="{{user && item.owner_id !== user.id}}" class="report-ic"
+                catchtap="openReportList" data-id="{{item.id}}" data-name="{{item.name}}">❗举报</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 举报弹层（列表页） -->
+  <view class="mask" wx:if="{{showReport}}" bindtap="closeReport">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet-title">举报「{{reportItemName}}」</view>
+      <view class="report-tip">帮管理员发现不合适的内容，会让小市场更安全 🌱</view>
+      <view class="reason-list">
+        <view class="reason-item {{reportReasonIndex === index ? 'reason-active' : ''}}"
+              wx:for="{{reportReasons}}" wx:key="*this"
+              bindtap="pickReason" data-idx="{{index}}">{{item}}</view>
+      </view>
+      <textarea class="report-note" placeholder="补充说明（可选）"
+                value="{{reportNote}}" bindinput="onReportNote"></textarea>
+      <view class="sheet-actions">
+        <button class="btn-outline" bindtap="closeReport">取消</button>
+        <button class="btn-primary" bindtap="submitReportList">提交举报</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空态 -->
+  <view wx:elif="{{loaded}}" class="empty">
+    <view class="empty-emoji">🍃</view>
+    <view>鱼塘暂时空空的，快上架你的闲置吧</view>
+    <button class="btn-outline m-btn" bindtap="goPublish">上架第一件</button>
+  </view>
+
+  <!-- 骨架 -->
+  <view wx:else class="list">
+    <view class="card skeleton" style="height:200rpx" wx:for="{{[1,2,3]}}" wx:key="*this"></view>
+  </view>
+
+  <!-- 右下发布按钮 -->
+  <view class="fab" bindtap="goPublish">＋上架</view>
+</view>

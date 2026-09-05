@@ -1,0 +1,23 @@
+<view class="login-wrap">
+  <view class="logo">🐟</view>
+  <view class="login-title">咸鱼小市场</view>
+  <view class="login-sub">让闲置游起来 · 以物换物 · 家长双确认</view>
+
+  <view class="form">
+    <view class="field">
+      <text class="label">我家孩子的昵称</text>
+      <input class="input" placeholder="例如：小豆豆" value="{{nickname}}" bindinput="onNickname" />
+    </view>
+    <view class="field">
+      <text class="label">班级</text>
+      <input class="input" placeholder="例如：三年级2班" value="{{gradeClass}}" bindinput="onGradeClass" />
+    </view>
+    <view class="field">
+      <text class="label">学校</text>
+      <input class="input" placeholder="例如：示范小学" value="{{school}}" bindinput="onSchool" />
+    </view>
+  </view>
+
+  <button class="btn-primary login-btn" bindtap="doLogin">进入鱼塘</button>
+  <view class="login-tip">演示模式：无需真实微信授权，输入昵称即完成注册</view>
+</view>

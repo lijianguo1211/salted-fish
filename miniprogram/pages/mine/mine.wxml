@@ -1,0 +1,73 @@
+<view class="tab-page">
+  <!-- 我的信息卡 -->
+  <view class="profile">
+    <view class="avatar big">{{user.avatar || '🙂'}}</view>
+    <view class="p-info">
+      <view class="p-name">{{user.nickname}}</view>
+      <view class="muted">{{user.school}} · {{user.grade_class}}</view>
+      <button class="btn-outline logout" size="mini" bindtap="logout">切换账号</button>
+    </view>
+    <view class="coin-panel">
+      <view class="coin-num">🐟 {{user.coin_balance}}</view>
+      <view class="coin-label">咸鱼币</view>
+    </view>
+  </view>
+
+  <!-- 组织 -->
+  <view class="card">
+    <view class="title">🏘 我的组织</view>
+    <view class="admin-entry" bindtap="goOrgs">
+      <text>{{orgName || '选择 / 加入组织'}}</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="admin-entry" wx:if="{{isOrgAdmin}}" bindtap="goOrgManage">
+      <text>组织管理（邀请 / 审成员 / 下架）</text>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 管理员入口（仅平台 admin） -->
+  <view class="card" wx:if="{{user.is_admin}}">
+    <view class="title">🛡️ 内容治理</view>
+    <view class="admin-entry" bindtap="goAdmin">
+      <text>举报处理与管理后台</text>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 咸鱼币规则说明 -->
+  <view class="card">
+    <view class="title">🐟 咸鱼币怎么得</view>
+    <view class="rule-row" wx:for="{{rules}}" wx:key="action">
+      <view class="rule-action">{{item.action}}</view>
+      <view class="rule-delta {{item.delta>0?'plus':'minus'}}">{{item.delta>0?'+':''}}{{item.delta}}</view>
+    </view>
+    <view class="muted rule-note">咸鱼币是荣誉积分，不可兑换现金、不可购买商品；未来可兑换学校义卖的小文具（本子、笔、橡皮擦）。</view>
+  </view>
+
+  <!-- 我的闲置 -->
+  <view class="card">
+    <view class="title">🎒 我的闲置</view>
+    <view class="my-item" wx:for="{{myItems}}" wx:key="id" data-id="{{item.id}}" bindtap="goItem">
+      <view class="m-emoji">{{item.emoji}}</view>
+      <view class="m-info">
+        <view class="m-name">{{item.name}}</view>
+        <view class="muted">{{item.statusText}}</view>
+      </view>
+      <view class="coin-badge">🐟 {{item.value_coins}}</view>
+    </view>
+    <view wx:if="{{!myItems.length}}" class="m-empty">还没有上架闲置，去鱼塘上架第一件吧</view>
+  </view>
+
+  <!-- 咸鱼币流水 -->
+  <view class="card" wx:if="{{ledger.length}}">
+    <view class="title">📒 咸鱼币明细</view>
+    <view class="ledger-row" wx:for="{{ledger}}" wx:key="id">
+      <view class="l-info">
+        <view class="l-note">{{item.note}}</view>
+        <view class="muted">{{item.created_at}}</view>
+      </view>
+      <view class="l-delta {{item.delta>0?'plus':'minus'}}">{{item.delta>0?'+':''}}{{item.delta}}</view>
+    </view>
+  </view>
+</view>

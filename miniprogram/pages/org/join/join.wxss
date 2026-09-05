@@ -1,0 +1,6 @@
+.code-input {
+  margin-top: 28rpx; background: #F7FCF9; border-radius: 16rpx;
+  padding: 28rpx; font-size: 36rpx; letter-spacing: 4rpx; text-align: center;
+  font-weight: 700;
+}
+.actions { padding: 24rpx; }

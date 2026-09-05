@@ -1,0 +1,74 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="boto3" />
+          <option value="fastapi" />
+          <option value="lark-oapi" />
+          <option value="litellm" />
+          <option value="mcp" />
+          <option value="numpy" />
+          <option value="opentelemetry-api" />
+          <option value="opentelemetry-exporter-otlp" />
+          <option value="opentelemetry-instrumentation-fastapi" />
+          <option value="opentelemetry-instrumentation-httpx" />
+          <option value="opentelemetry-instrumentation-logging" />
+          <option value="opentelemetry-sdk" />
+          <option value="pathspec" />
+          <option value="pydantic-settings" />
+          <option value="pyobvector" />
+          <option value="pypdf" />
+          <option value="python-multipart" />
+          <option value="sqlalchemy" />
+          <option value="streamlit" />
+          <option value="uvicorn" />
+          <option value="python-dotenv" />
+          <option value="langchain" />
+          <option value="langgraph" />
+          <option value="langchain-core" />
+          <option value="langchain-openai" />
+          <option value="pymilvus" />
+          <option value="beautifulsoup4" />
+          <option value="openai-agents" />
+          <option value="redis" />
+          <option value="pydantic" />
+          <option value="tqdm" />
+          <option value="requests" />
+          <option value="openai" />
+          <option value="contextvars" />
+          <option value="pymupdf4llm" />
+          <option value="pymupdf" />
+          <option value="pillow" />
+          <option value="openpyxl" />
+          <option value="mem0ai" />
+          <option value="langmem" />
+          <option value="urllib3" />
+          <option value="google-cloud-translate" />
+          <option value="langdetect" />
+          <option value="tweepy" />
+          <option value="cryptography" />
+          <option value="google-generativeai" />
+          <option value="tenacity" />
+          <option value="google-genai" />
+          <option value="tiktoken" />
+          <option value="curl_cffi" />
+          <option value="ipykernel" />
+          <option value="jupyterlab" />
+          <option value="matplotlib" />
+          <option value="pandas" />
+          <option value="jsonschema" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="str.*" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

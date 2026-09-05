@@ -1,0 +1,37 @@
+<view class="tab-page">
+  <view class="card">
+    <view class="title">邀请码</view>
+    <view class="code">{{inviteCode || '—'}}</view>
+    <view class="row">
+      <button class="btn-outline mini" size="mini" bindtap="copyCode">复制</button>
+      <button class="btn-outline mini" size="mini" bindtap="refreshCode">刷新邀请码</button>
+    </view>
+    <view class="muted">仅邀请码可加入；对方提交后需你在下方审核。</view>
+  </view>
+
+  <view class="card">
+    <view class="title">待审核成员</view>
+    <view class="mem-row" wx:for="{{pending}}" wx:key="id">
+      <view class="grow">
+        <view class="org-name">{{item.nickname}}</view>
+        <view class="muted">{{item.grade_class || '未填班级'}} · {{item.created_at}}</view>
+      </view>
+      <button class="btn-outline mini" size="mini" data-id="{{item.id}}" data-action="reject" bindtap="handleMem">拒绝</button>
+      <button class="btn-primary mini" size="mini" data-id="{{item.id}}" data-action="approve" bindtap="handleMem">通过</button>
+    </view>
+    <view class="muted" wx:if="{{!pending.length}}">暂无待审核</view>
+  </view>
+
+  <view class="card">
+    <view class="title">本组织闲置</view>
+    <view class="mem-row" wx:for="{{items}}" wx:key="id">
+      <view class="grow">
+        <view class="org-name">{{item.name}}</view>
+        <view class="muted">{{item.owner}} · {{item.status}}</view>
+      </view>
+      <button class="btn-danger mini" size="mini" data-id="{{item.id}}" bindtap="removeItem"
+              wx:if="{{item.status!=='swapped' && item.status!=='removed'}}">下架</button>
+    </view>
+    <view class="muted" wx:if="{{!items.length}}">暂无闲置</view>
+  </view>
+</view>

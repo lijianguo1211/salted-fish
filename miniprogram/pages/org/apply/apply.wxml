@@ -1,0 +1,23 @@
+<view class="tab-page">
+  <view class="card">
+    <view class="title">组织信息</view>
+    <view class="field">
+      <view class="label">名称</view>
+      <input placeholder="例如：阳光小学 / 幸福里小区" value="{{name}}" bindinput="onName" />
+    </view>
+    <view class="field">
+      <view class="label">类型</view>
+      <picker range="{{typeLabels}}" value="{{typeIndex}}" bindchange="onType">
+        <view class="picker">{{typeLabels[typeIndex]}}</view>
+      </picker>
+    </view>
+    <view class="field">
+      <view class="label">说明（选填）</view>
+      <textarea placeholder="给平台审核看的补充说明" value="{{description}}" bindinput="onDesc" maxlength="500" />
+    </view>
+  </view>
+  <view class="muted tip">提交后需平台审核通过才能使用；通过后你将成为组织管理员，可邀请他人加入。</view>
+  <view class="actions">
+    <button class="btn-primary" bindtap="submit">提交申请</button>
+  </view>
+</view>

@@ -1,0 +1,40 @@
+<view class="swap-page">
+  <view class="card" wx:if="{{swap}}">
+    <view class="status status-{{swap.status}}">{{swap.statusText}}</view>
+    <view class="pair">
+      <view class="p-img">{{swap.initiator_item.emoji}}</view>
+      <view class="p-arrow">⇄</view>
+      <view class="p-img">{{swap.receiver_item.emoji}}</view>
+    </view>
+    <view class="pair-names">
+      <view class="p-name">{{swap.initiator_item.name}}</view>
+      <view></view>
+      <view class="p-name">{{swap.receiver_item.name}}</view>
+    </view>
+    <view class="pair-owners muted">
+      <view>{{swap.initiator_item.owner}}</view>
+      <view>{{swap.receiver_item.owner}}</view>
+    </view>
+    <view wx:if="{{swap.note}}" class="note">💬 {{swap.note}}</view>
+  </view>
+
+  <!-- 家长确认进度 -->
+  <view class="card" wx:if="{{swap}}">
+    <view class="title">家长确认进度</view>
+    <view class="steps">
+      <view class="step {{s.done?'step-ok':'step-wait'}}" wx:for="{{steps}}" wx:key="key">
+        <view class="step-dot">{{s.done?'✔':'○'}}</view>
+        <view class="step-body">
+          <view class="step-title {{s.done?'':'muted'}}">{{s.title}}</view>
+          <view class="step-time" wx:if="{{s.time}}">{{s.time}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-bar" wx:if="{{swap}}">
+    <button wx:if="{{swap.needMyConfirm}}" class="btn-primary" bindtap="confirm">家长确认</button>
+    <button wx:elif="{{swap.needMyComplete}}" class="btn-primary" bindtap="complete">交换完成</button>
+    <button wx:if="{{swap.canCancel}}" class="btn-danger" bindtap="cancel">取消交换</button>
+  </view>
+</view>

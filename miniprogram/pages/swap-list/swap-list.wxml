@@ -1,0 +1,58 @@
+<view class="tab-page">
+  <!-- 顶部 tab 筛选 -->
+  <view class="bar">
+    <view class="bar-item {{tab==='all'?'bar-on':''}}" bindtap="setTab" data-tab="all">全部</view>
+    <view class="bar-item {{tab==='todo'?'bar-on':''}}" bindtap="setTab" data-tab="todo">待确认</view>
+    <view class="bar-item {{tab==='doing'?'bar-on':''}}" bindtap="setTab" data-tab="doing">交换中</view>
+    <view class="bar-item {{tab==='done'?'bar-on':''}}" bindtap="setTab" data-tab="done">已完成</view>
+  </view>
+
+  <view class="list" wx:if="{{swaps.length}}">
+    <view class="card swap-card" wx:for="{{swaps}}" wx:key="id" wx:for-index="idx">
+      <!-- 状态头 -->
+      <view class="swap-head">
+        <text class="status status-{{item.status}}">{{item.statusText}}</text>
+        <text class="muted">{{item.created_at}}</text>
+      </view>
+
+      <!-- 双方宝贝 -->
+      <view class="swap-pair" bindtap="openDetail" data-id="{{item.id}}">
+        <view class="side">
+          <view class="side-img">{{item.initiator_item.emoji}}</view>
+          <view class="side-name">{{item.initiator_item.name}}</view>
+          <view class="coin-badge">🐟 {{item.initiator_item.value_coins}}</view>
+        </view>
+        <view class="arrow">⇄</view>
+        <view class="side">
+          <view class="side-img">{{item.receiver_item.emoji}}</view>
+          <view class="side-name">{{item.receiver_item.name}}</view>
+          <view class="coin-badge">🐟 {{item.receiver_item.value_coins}}</view>
+        </view>
+      </view>
+
+      <!-- 家长确认进度 -->
+      <view class="confirm-line">
+        <view class="cf {{item.initiator_ok?'cf-ok':'cf-wait'}}">
+          {{item.initiator_ok ? '✔' : '…'}} 发起方家长</view>
+        <view class="cf {{item.receiver_ok?'cf-ok':'cf-wait'}}">
+          {{item.receiver_ok ? '✔' : '…'}} 接收方家长</view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="swap-actions">
+        <!-- 待我确认 -->
+        <button wx:if="{{item.needMyConfirm}}" class="btn-primary mini" bindtap="confirmIt"
+                data-id="{{item.id}}" data-side="{{item.mySide}}">家长确认</button>
+        <button wx:if="{{item.canComplete && item.needMyComplete}}" class="btn-primary mini"
+                bindtap="completeIt" data-id="{{item.id}}" data-side="{{item.mySide}}">交换完成</button>
+        <button wx:if="{{item.canCancel}}" class="btn-danger mini" bindtap="cancelIt"
+                data-id="{{item.id}}">取消</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{loaded}}" class="empty">
+    <view class="empty-emoji">🔄</view>
+    <view>还没有交换记录</view>
+  </view>
+</view>

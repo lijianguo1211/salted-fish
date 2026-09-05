@@ -1,0 +1,26 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+*.db
+backend/salted_fish.db
+backend/test.db
+
+# 本地上传文件
+backend/uploads/
+
+# 环境变量：真密钥不入库，模板 .env.example 保留
+.env
+backend/.env
+
+# RSA 私钥（独立后台登录用，切勿入库）
+backend/app/keys/
+backend/keys/
+
+# 系统
+.DS_Store
+
+# 独立后台（admin-web）依赖与构建产物
+admin-web/node_modules/
+admin-web/dist/
+admin-web/.npm-cache/

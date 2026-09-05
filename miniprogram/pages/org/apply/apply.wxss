@@ -1,0 +1,8 @@
+.field { margin-top: 24rpx; }
+.label { font-size: 24rpx; color: #6B7C75; margin-bottom: 10rpx; }
+input, textarea, .picker {
+  background: #F7FCF9; border-radius: 16rpx; padding: 20rpx 24rpx;
+}
+textarea { min-height: 160rpx; width: 100%; box-sizing: border-box; }
+.tip { padding: 0 32rpx; }
+.actions { padding: 24rpx; }

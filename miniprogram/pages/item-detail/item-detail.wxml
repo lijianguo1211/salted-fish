@@ -1,0 +1,96 @@
+<view class="detail-page">
+  <!-- 图片 -->
+  <view class="hero">
+    <image wx:if="{{item.images.length}}" class="hero-img-real" src="{{item.images[0]}}" mode="aspectFill" />
+    <view wx:else class="hero-img">{{item.emoji || '🎁'}}</view>
+    <view class="hero-coin">
+      <text>🐟</text>
+      <text class="hero-num">{{item.value_coins}}</text>
+      <text>咸鱼币参考</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="name-row">
+      <view class="name">{{item.name}}</view>
+      <view class="chip">{{item.condition}}</view>
+    </view>
+    <view class="meta-row">
+      <text>👤 {{item.owner}} · {{item.owner_class}}</text>
+    </view>
+    <view class="want">
+      <view class="want-label">想换</view>
+      <view class="want-tags">
+        <text class="chip chip-want" wx:for="{{wantTags}}" wx:key="*this">{{item}}</text>
+        <text class="chip chip-want" wx:if="{{!wantTags.length}}">什么都行</text>
+      </view>
+    </view>
+    <view class="desc" wx:if="{{item.description}}">{{item.description}}</view>
+  </view>
+
+  <!-- 底部操作 -->
+  <view class="action-bar">
+    <button wx:if="{{!isMine}}" class="btn-primary" bindtap="openSwap">用我的宝贝换这个</button>
+    <button wx:if="{{!isMine}}" class="btn-report" bindtap="openReport">❗举报</button>
+    <view wx:if="{{isMine}}" class="mine-actions">
+      <button class="btn-edit" bindtap="openEditValue">改价值 🐟{{item.value_coins}}</button>
+      <button class="btn-danger" bindtap="removeItem">下架</button>
+    </view>
+  </view>
+
+  <!-- 修改价值弹层 -->
+  <view class="mask" wx:if="{{showEditValue}}" bindtap="closeEditValue">
+    <view class="sheet sheet-center" catchtap="noop">
+      <view class="sheet-title">调整这件闲置的价值</view>
+      <view class="ev-stepper">
+        <button class="ev-btn" bindtap="evDec">−</button>
+        <view class="ev-num">🐟 {{editCoins}}</view>
+        <button class="ev-btn" bindtap="evInc">＋</button>
+      </view>
+      <view class="ev-hint">咸鱼币是参考价值，不能超过 15 枚。匹配时可凭此找到差不多的交换。</view>
+      <view class="sheet-actions">
+        <button class="btn-outline" bindtap="closeEditValue">取消</button>
+        <button class="btn-primary" bindtap="saveValue">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 举报弹层 -->
+  <view class="mask" wx:if="{{showReport}}" bindtap="closeReport">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet-title">举报这件闲置</view>
+      <view class="report-tip">帮管理员发现不合适的内容，会让小市场更安全 🌱</view>
+      <view class="reason-list">
+        <view class="reason-item {{reportReasonIndex === index ? 'reason-active' : ''}}"
+              wx:for="{{reportReasons}}" wx:key="*this"
+              bindtap="pickReason" data-idx="{{index}}">{{item}}</view>
+      </view>
+      <textarea class="report-note" placeholder="补充说明（可选）"
+                value="{{reportNote}}" bindinput="onReportNote"></textarea>
+      <view class="sheet-actions">
+        <button class="btn-outline" bindtap="closeReport">取消</button>
+        <button class="btn-primary" bindtap="submitReport">提交举报</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 选择我的闲置的半屏弹层 -->
+  <view class="mask" wx:if="{{showPicker}}" bindtap="closePicker">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet-title">选一件我的闲置来交换</view>
+      <scroll-view scroll-y class="sheet-list">
+        <view class="pick-item" wx:for="{{myItems}}" wx:key="id"
+              bindtap="confirmSwap" data-id="{{item.id}}">
+          <view class="pick-emoji">{{item.emoji}}</view>
+          <view class="pick-info">
+            <view class="pick-name">{{item.name}}</view>
+            <view class="muted">{{item.want_tags_text}}</view>
+          </view>
+          <view class="coin-badge">🐟 {{item.value_coins}}</view>
+        </view>
+        <view wx:if="{{!myItems.length}}" class="pick-empty">你还没有可用的闲置，先上架一件吧</view>
+      </scroll-view>
+      <button class="btn-outline" bindtap="closePicker">取消</button>
+    </view>
+  </view>
+</view>

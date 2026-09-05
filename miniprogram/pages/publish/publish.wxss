@@ -1,0 +1,69 @@
+.publish-page { padding-bottom: 160rpx; box-sizing: border-box; }
+.title { font-size: 32rpx; }
+.input {
+  margin-top: 18rpx;
+  background: #EAF8F3;
+  border-radius: 14rpx;
+  padding: 22rpx 24rpx;
+  font-size: 28rpx;
+}
+.picker {
+  margin-top: 18rpx;
+  background: #EAF8F3;
+  border-radius: 14rpx;
+  padding: 22rpx 24rpx;
+  font-size: 28rpx;
+  color: #46635A;
+}
+.conditions { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
+.cond {
+  padding: 12rpx 24rpx;
+  margin: 0 16rpx 16rpx 0;
+  background: #E7F6F0;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  color: #5F7A70;
+}
+.cond-on { background: #54C7A5; color: #fff; font-weight: 600; }
+
+.photo-row { display: flex; margin-top: 22rpx; }
+.photo { position: relative; width: 150rpx; height: 150rpx; margin: 0 16rpx 16rpx 0; }
+.photo-img { width: 150rpx; height: 150rpx; border-radius: 14rpx; background: #E7F6F0; }
+.photo-empty { background: #E7F6F0; border-radius: 14rpx; }
+.photo-del {
+  position: absolute; right: -10rpx; top: -10rpx;
+  width: 40rpx; height: 40rpx; background: rgba(0,0,0,0.5); color: #fff;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+.photo-add {
+  width: 150rpx; height: 150rpx;
+  border: 2rpx dashed #C9EADC; border-radius: 14rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56rpx; color: #C7B7A3;
+}
+.muted.tip { margin-top: 14rpx; }
+
+.val-btn {
+  background: #54C7A5; color: #fff; font-size: 26rpx;
+  padding: 12rpx 26rpx; border-radius: 32rpx;
+}
+.val-ing { background: #FFD978; }
+.ai-result { display: flex; align-items: baseline; margin-top: 20rpx; }
+.ai-num { font-size: 56rpx; font-weight: 800; color: #54C7A5; }
+.ai-expl { margin-top: 12rpx; color: #5F7A70; font-size: 26rpx; line-height: 1.6; }
+.suggestion { margin-top: 16rpx; color: #B0A69C; font-size: 24rpx; }
+
+.stepper { display: flex; align-items: center; margin-top: 20rpx; }
+.step-btn {
+  width: 64rpx; height: 64rpx; border-radius: 50%;
+  background: #fff; border: 2rpx solid #C9EBDE; color: #54C7A5;
+  font-size: 40rpx; display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+}
+.step-num { margin: 0 30rpx; font-size: 40rpx; font-weight: 700; color: #54C7A5; }
+
+.submit-bar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: #fff; padding: 20rpx 24rpx;
+  box-shadow: 0 -6rpx 20rpx rgba(0,0,0,0.05);
+}

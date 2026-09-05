@@ -1,0 +1,115 @@
+.hero {
+  height: 420rpx;
+  background: linear-gradient(135deg, #D8F3E9, #BFEADC);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.hero-img {
+  font-size: 200rpx;
+}
+.hero-img-real {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-coin {
+  position: absolute;
+  right: 32rpx;
+  bottom: 32rpx;
+  background: rgba(255,255,255,0.9);
+  border-radius: 16rpx;
+  padding: 12rpx 22rpx;
+  font-size: 24rpx;
+  color: #7B6E63;
+  display: flex;
+  align-items: center;
+}
+.hero-num { font-size: 40rpx; font-weight: 800; color: #54C7A5; margin: 0 8rpx; }
+
+.name-row { display: flex; align-items: center; justify-content: space-between; }
+.name { font-size: 36rpx; font-weight: 800; }
+.meta-row { color: #9A8F86; font-size: 26rpx; margin-top: 12rpx; }
+.want { margin-top: 24rpx; }
+.want-label { font-size: 28rpx; font-weight: 700; color: #46635A; margin-bottom: 12rpx; }
+.want-tags { display: flex; flex-wrap: wrap; }
+.chip-want { background: #DCEFE8; color: #2C9B80; }
+.desc { margin-top: 24rpx; color: #46635A; font-size: 28rpx; line-height: 1.7; }
+
+.action-bar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: #fff; padding: 20rpx 24rpx;
+  box-shadow: 0 -6rpx 20rpx rgba(0,0,0,0.05);
+}
+
+.mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: flex-end; z-index: 10;
+}
+.sheet {
+  background: #fff; border-radius: 28rpx 28rpx 0 0;
+  width: 100%; padding: 32rpx 28rpx 40rpx;
+  max-height: 70vh; box-sizing: border-box;
+}
+.sheet-title { font-size: 32rpx; font-weight: 700; margin-bottom: 20rpx; text-align: center; }
+.sheet-list { max-height: 46vh; }
+.pick-item {
+  display: flex; align-items: center;
+  padding: 20rpx; margin-bottom: 16rpx;
+  background: #EAF8F3; border-radius: 16rpx;
+}
+.pick-emoji {
+  width: 80rpx; height: 80rpx; background: #E7F6F0;
+  border-radius: 14rpx; display: flex; align-items: center; justify-content: center;
+  font-size: 40rpx;
+}
+.pick-info { flex: 1; margin-left: 16rpx; }
+.pick-name { font-size: 28rpx; font-weight: 600; }
+.pick-empty { text-align: center; color: #B0A69C; padding: 40rpx; }
+
+/* 举报按钮（更醒目，带警示色） */
+.btn-report {
+  margin-top: 16rpx; margin-left: 16rpx;
+  background: #FDEAE4; color: #D9534F; font-size: 26rpx;
+  padding: 8rpx 24rpx; border-radius: 999rpx; border: 1rpx solid #BDE7DA;
+  line-height: 1.4;
+}
+.btn-report::after { border: none; }
+
+/* 物主操作区（改价值 + 下架） */
+.mine-actions { display: flex; gap: 16rpx; }
+.mine-actions button { flex: 1; }
+.btn-edit {
+  background: #E7F6F0; color: #54C7A5; font-size: 28rpx;
+  border-radius: 999rpx; padding: 18rpx 0; font-weight: 600;
+}
+.btn-edit::after { border: none; }
+
+/* 修改价值弹层 */
+.sheet-center { display: flex; flex-direction: column; align-items: center; }
+.ev-stepper { display: flex; align-items: center; gap: 40rpx; margin: 16rpx 0 8rpx; }
+.ev-btn {
+  width: 96rpx; height: 96rpx; border-radius: 50%;
+  background: #E7F6F0; color: #54C7A5; font-size: 52rpx; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.ev-btn::after { border: none; }
+.ev-num { font-size: 56rpx; font-weight: 800; color: #2B4A42; min-width: 140rpx; text-align: center; }
+.ev-hint { color: #B0A69C; font-size: 24rpx; text-align: center; margin: 8rpx 0 20rpx; }
+
+/* 举报弹层 */
+.report-tip { color: #B0A69C; font-size: 24rpx; margin-bottom: 20rpx; }
+.reason-list { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 24rpx; }
+.reason-item {
+  padding: 14rpx 24rpx; border-radius: 999rpx;
+  background: #E7F6F0; font-size: 26rpx; color: #46635A;
+}
+.reason-active { background: #54C7A5; color: #fff; font-weight: 600; }
+.report-note {
+  width: 100%; height: 130rpx; box-sizing: border-box;
+  background: #F0FBF7; border-radius: 16rpx; padding: 16rpx;
+  font-size: 26rpx;
+}
+.sheet-actions { display: flex; gap: 16rpx; margin-top: 28rpx; }
+.sheet-actions .btn-outline, .sheet-actions .btn-primary { flex: 1; }

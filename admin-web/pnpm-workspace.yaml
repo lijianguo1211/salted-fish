@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: false
+# pnpm ≥10 允许执行 esbuild 的构建脚本（否则 Vite 拿不到 esbuild 原生二进制，启动即报错）
+onlyBuiltDependencies:
+  - esbuild

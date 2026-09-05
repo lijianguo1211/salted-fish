@@ -1,0 +1,91 @@
+/* 全局样式：环保绿主题（废物利用 · 低碳循环） */
+page {
+  background: #F7FCF9;
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  color: #21473C;
+  font-size: 28rpx;
+}
+
+/* ---- 卡片 ---- */
+.card {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin: 20rpx 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(47, 168, 79, 0.10);
+}
+
+/* ---- 按钮 ---- */
+.btn-primary {
+  background: linear-gradient(135deg, #6FD6B5, #54C7A5);
+  color: #fff;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  text-align: center;
+  padding: 22rpx 0;
+  border: none;
+  line-height: 1.2;
+}
+.btn-primary.btn-disabled { opacity: 0.5; }
+.btn-outline {
+  background: #fff;
+  color: #54C7A5;
+  border: 2rpx solid #BFE8B0;
+  border-radius: 44rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-align: center;
+  padding: 20rpx 0;
+  box-sizing: border-box;
+}
+.btn-danger {
+  background: #fff;
+  color: #E5484D;
+  border: 2rpx solid #f3c1c2;
+  border-radius: 44rpx;
+  font-size: 28rpx;
+  text-align: center;
+  padding: 18rpx 0;
+}
+
+/* ---- 咸鱼币徽章 ---- */
+.coin-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #E7F6F0;
+  color: #54C7A5;
+  border-radius: 30rpx;
+  padding: 6rpx 18rpx;
+  font-weight: 700;
+  font-size: 26rpx;
+}
+
+/* ---- 状态 chip ---- */
+.chip {
+  display: inline-block;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+  font-size: 22rpx;
+  margin-right: 12rpx;
+  background: #EAF0E6;
+  color: #3F6357;
+}
+
+/* ---- 标签栏页空白占位 ---- */
+.tab-page { padding-bottom: 40rpx; }
+
+/* ---- 通用排版 ---- */
+.title { font-size: 34rpx; font-weight: 700; }
+.sub { color: #8FA190; font-size: 24rpx; }
+.muted { color: #A8B6A8; font-size: 24rpx; }
+.row { display: flex; align-items: center; }
+.space-between { display: flex; justify-content: space-between; align-items: center; }
+.center { display: flex; justify-content: center; align-items: center; }
+.mt-8 { margin-top: 8rpx; }
+.mt-16 { margin-top: 16rpx; }
+.mt-24 { margin-top: 24rpx; }
+
+/* 骨架占位 */
+.skeleton { background: #E9EFE5; border-radius: 16rpx; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0% {opacity:.4;} 50% {opacity:.8;} 100% {opacity:.4;} }

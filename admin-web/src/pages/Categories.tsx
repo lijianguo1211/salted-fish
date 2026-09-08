@@ -1,107 +1,142 @@
 import { useCallback, useEffect, useState } from 'react';
+import { App, Button, Form, Input, InputNumber, Modal, Space, Switch, Table, Tag, Typography } from 'antd';
 import { api } from '../api';
 
-type Category = { id: number; name: string; value_base: number; note: string; sort_order: number; is_active: boolean };
-
-const EMPTY = { name: '', value_base: 2, note: '', sort_order: 0, is_active: true };
+type Category = {
+  id: number;
+  name: string;
+  value_base: number;
+  note: string;
+  sort_order: number;
+  is_active: boolean;
+};
 
 export default function Categories() {
+  const { message, modal } = App.useApp();
   const [list, setList] = useState<Category[]>([]);
-  const [editing, setEditing] = useState<(typeof EMPTY & { id?: number }) | null>(null);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState('');
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Category | null>(null);
+  const [form] = Form.useForm();
 
   const load = useCallback(() => {
-    api.categories().then(setList).catch((e: any) => setMsg(e.detail || '加载失败'))
+    setLoading(true);
+    api.categories()
+      .then(setList)
+      .catch((e: any) => message.error(e.detail || '加载失败'))
       .finally(() => setLoading(false));
-  }, []);
-
+  }, [message]);
   useEffect(load, [load]);
 
+  const openCreate = () => {
+    setEditing(null);
+    form.setFieldsValue({ name: '', value_base: 2, note: '', sort_order: 0, is_active: true });
+    setOpen(true);
+  };
+
+  const openEdit = (c: Category) => {
+    setEditing(c);
+    form.setFieldsValue(c);
+    setOpen(true);
+  };
+
   const save = async () => {
-    if (!editing) return;
-    if (!editing.name.trim()) { setMsg('请填写分类名'); return; }
-    setMsg('');
+    const values = await form.validateFields();
     try {
-      if (editing.id) await api.updateCategory(editing.id, editing);
-      else await api.createCategory(editing);
-      setEditing(null);
+      if (editing) await api.updateCategory(editing.id, values);
+      else await api.createCategory(values);
+      message.success('已保存');
+      setOpen(false);
       load();
     } catch (e: any) {
-      setMsg(e.detail || '保存失败');
+      message.error(e.detail || '保存失败');
     }
   };
 
   const remove = async (c: Category) => {
-    if (!confirm(`删除分类「${c.name}」？若有闲置正在使用将无法删除。`)) return;
+    const ok = await modal.confirm({
+      title: `删除分类「${c.name}」？`,
+      content: '若有闲置正在使用将无法删除。',
+    });
+    if (!ok) return;
     try {
       await api.deleteCategory(c.id);
+      message.success('已删除');
       load();
     } catch (e: any) {
-      alert(e.detail || '删除失败');
+      message.error(e.detail || '删除失败');
     }
   };
 
   return (
     <div>
-      <div className="page-title">分类管理</div>
-      <div className="page-sub">闲置分类存数据库，可新增 / 改名 / 调估值基准 / 排序 / 启停。停用后发布时不可选。</div>
-
-      <div className="row" style={{ marginBottom: 16 }}>
-        <button onClick={() => setEditing({ ...EMPTY })}>＋ 新增分类</button>
-        {msg && <span style={{ color: 'var(--red)' }}>{msg}</span>}
+      <div className="admin-page-header">
+        <Typography.Title level={3}>分类管理</Typography.Title>
+        <Typography.Paragraph type="secondary">
+          闲置分类存数据库，可新增 / 改名 / 调估值基准 / 排序 / 启停。停用后发布时不可选。
+        </Typography.Paragraph>
       </div>
 
-      {editing && (
-        <div className="card">
-          <b style={{ marginRight: 16 }}>{editing.id ? '编辑分类' : '新增分类'}</b>
-          <div className="row" style={{ flexWrap: 'wrap' }}>
-            <input placeholder="分类名" value={editing.name}
-                   onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
-            <input type="number" style={{ width: 90 }} min={1} max={15} value={editing.value_base}
-                   title="AI 估值基准枚数"
-                   onChange={(e) => setEditing({ ...editing, value_base: Number(e.target.value) || 0 })} />
-            <input type="number" style={{ width: 80 }} value={editing.sort_order}
-                   title="排序（越小越靠前）"
-                   onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) || 0 })} />
-            <input placeholder="说明(可选)" value={editing.note}
-                   onChange={(e) => setEditing({ ...editing, note: e.target.value })} />
-            <label className="row" style={{ gap: 6, whiteSpace: 'nowrap' }}>
-              <input type="checkbox" checked={editing.is_active}
-                     onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} />
-              启用
-            </label>
-          </div>
-          <div className="row mt">
-            <button onClick={save}>保存</button>
-            <button className="ghost" onClick={() => setEditing(null)}>取消</button>
-          </div>
-        </div>
-      )}
+      <Button type="primary" onClick={openCreate} style={{ marginBottom: 16 }}>
+        新增分类
+      </Button>
 
-      <table>
-        <thead><tr><th>#</th><th>分类名</th><th>估值基准</th><th>排序</th><th>状态</th><th>说明</th><th>操作</th></tr></thead>
-        <tbody>
-          {list.map((c, i) => (
-            <tr key={c.id}>
-              <td>{i + 1}</td>
-              <td><b>{c.name}</b></td>
-              <td>{c.value_base} 枚</td>
-              <td>{c.sort_order}</td>
-              <td><span className={'chip ' + (c.is_active ? '' : 'gray')}>{c.is_active ? '启用' : '停用'}</span></td>
-              <td style={{ color: 'var(--muted)' }}>{c.note}</td>
-              <td>
-                <button className="ghost" style={{ marginRight: 8 }}
-                        onClick={() => setEditing({ id: c.id, name: c.name, value_base: c.value_base, note: c.note, sort_order: c.sort_order, is_active: c.is_active })}>
-                  编辑
-                </button>
-                <button className="danger" onClick={() => remove(c)}>删除</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {!loading && list.length === 0 && <div className="empty">暂无分类，点「新增分类」添加</div>}
+      <Table
+        rowKey="id"
+        loading={loading}
+        dataSource={list}
+        scroll={{ x: 720 }}
+        pagination={false}
+        columns={[
+          { title: '#', width: 60, render: (_, __, i) => i + 1 },
+          { title: '分类名', dataIndex: 'name', render: (v) => <b>{v}</b> },
+          { title: '估值基准', dataIndex: 'value_base', render: (v) => `${v} 枚` },
+          { title: '排序', dataIndex: 'sort_order' },
+          {
+            title: '状态',
+            dataIndex: 'is_active',
+            render: (v) => <Tag color={v ? 'success' : 'default'}>{v ? '启用' : '停用'}</Tag>,
+          },
+          { title: '说明', dataIndex: 'note', ellipsis: true },
+          {
+            title: '操作',
+            fixed: 'right',
+            width: 160,
+            render: (_, c) => (
+              <Space>
+                <Button size="small" onClick={() => openEdit(c)}>编辑</Button>
+                <Button size="small" danger onClick={() => remove(c)}>删除</Button>
+              </Space>
+            ),
+          },
+        ]}
+      />
+
+      <Modal
+        title={editing ? '编辑分类' : '新增分类'}
+        open={open}
+        onOk={save}
+        onCancel={() => setOpen(false)}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item name="name" label="分类名" rules={[{ required: true, message: '请填写分类名' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="value_base" label="AI 估值基准枚数" rules={[{ required: true }]}>
+            <InputNumber min={1} max={15} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name="sort_order" label="排序（越小越靠前）">
+            <InputNumber style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name="note" label="说明">
+            <Input />
+          </Form.Item>
+          <Form.Item name="is_active" label="启用" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

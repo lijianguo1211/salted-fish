@@ -36,7 +36,15 @@ export const api = {
   // 组织创建审核（日常管理在小程序）
   orgs: (status = 'pending') => request('/admin/orgs', { query: { status } }),
   reviewOrg: (id: number, body: any) =>
-    request(`/admin/orgs/${id}/review`, { method: 'POST', body }),,
+    request(`/admin/orgs/${id}/review`, { method: 'POST', body }),
+
+  orgSettings: () => request('/admin/org-settings'),
+  updateOrgSettings: (body: { max_orgs_per_creator: number }) =>
+    request('/admin/org-settings', { method: 'PUT', body }),
+  orgQuotaApps: (status = 'pending') =>
+    request('/admin/org-quota-applications', { query: { status } }),
+  reviewOrgQuota: (id: number, body: any) =>
+    request(`/admin/org-quota-applications/${id}/review`, { method: 'POST', body }),
 
   // 大模型多 Key
   llmVendors: () => request('/admin/llm/vendors'),
@@ -48,4 +56,9 @@ export const api = {
     request(`/admin/llm/providers/${id}`, { method: 'DELETE' }),
   testLlm: (id: number) =>
     request(`/admin/llm/providers/${id}/test`, { method: 'POST' }),
+
+  // AI 能力开关
+  aiSettings: () => request('/admin/ai-settings'),
+  updateAiSettings: (body: { ai_pricing_enabled?: boolean; ai_moderation_enabled?: boolean }) =>
+    request('/admin/ai-settings', { method: 'PUT', body }),
 };

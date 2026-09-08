@@ -3,6 +3,10 @@ backend/.venv/
 __pycache__/
 *.pyc
 *.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.db.bak
 backend/salted_fish.db
 backend/test.db
 
@@ -16,6 +20,12 @@ backend/.env
 # RSA 私钥（独立后台登录用，切勿入库）
 backend/app/keys/
 backend/keys/
+
+# 本地包管理缓存（isotun不再入库）
+backend/.uv-cache/
+backend/.pip-cache/
+admin-web/.npm-cache/
+admin-web/.pnpm-store/
 
 # 系统
 .DS_Store

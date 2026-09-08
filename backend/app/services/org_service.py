@@ -10,6 +10,8 @@ from ..models import Organization, OrgMembership, User
 
 ORG_TYPES = ("school", "community", "other")
 ORG_TYPE_LABEL = {"school": "学校", "community": "小区", "other": "其他"}
+DEFAULT_MAX_ORGS_PER_CREATOR = 3
+SETTING_MAX_ORGS = "max_orgs_per_creator"
 
 
 def generate_invite_code(db: Session, length: int = 8) -> str:
@@ -95,3 +97,77 @@ def reject_organization(db: Session, org: Organization, reviewer_id: int, reason
     org.reviewed_at = datetime.utcnow()
     db.flush()
     return org
+
+
+def get_setting(db: Session, key: str, default: str = "") -> str:
+    from ..models import AppSetting
+
+    row = db.get(AppSetting, key)
+    if not row or row.value is None or row.value == "":
+        return default
+    return row.value
+
+
+def set_setting(db: Session, key: str, value: str) -> str:
+    from ..models import AppSetting
+
+    row = db.get(AppSetting, key)
+    if not row:
+        row = AppSetting(key=key, value=str(value))
+        db.add(row)
+    else:
+        row.value = str(value)
+    db.flush()
+    return row.value
+
+
+def default_max_orgs(db: Session) -> int:
+    raw = get_setting(db, SETTING_MAX_ORGS, str(DEFAULT_MAX_ORGS_PER_CREATOR))
+    try:
+        n = int(raw)
+    except (TypeError, ValueError):
+        n = DEFAULT_MAX_ORGS_PER_CREATOR
+    return max(1, min(n, 50))
+
+
+def user_create_limit(db: Session, user: User) -> int:
+    if user.org_create_limit is not None and user.org_create_limit > 0:
+        return int(user.org_create_limit)
+    return default_max_orgs(db)
+
+
+def count_created_orgs(db: Session, user_id: int) -> int:
+    """占用名额：待审 + 已通过（驳回不占）。"""
+    return (
+        db.query(Organization)
+        .filter(
+            Organization.creator_id == user_id,
+            Organization.status.in_(("pending", "approved")),
+        )
+        .count()
+    )
+
+
+def create_quota_info(db: Session, user: User) -> dict:
+    limit = user_create_limit(db, user)
+    used = count_created_orgs(db, user.id)
+    remaining = max(0, limit - used)
+    return {
+        "default_limit": default_max_orgs(db),
+        "limit": limit,
+        "used": used,
+        "remaining": remaining,
+        "can_create": remaining > 0,
+        "personal_limit": user.org_create_limit,
+    }
+
+
+def assert_can_create_org(db: Session, user: User) -> dict:
+    info = create_quota_info(db, user)
+    if not info["can_create"]:
+        raise HTTPException(
+            400,
+            f"每人默认可创建 {info['limit']} 个组织，你已用满。"
+            "如需更多，请提交超额申请并上传证明（如教师资格证）。",
+        )
+    return info

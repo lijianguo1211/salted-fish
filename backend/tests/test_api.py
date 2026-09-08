@@ -8,6 +8,7 @@ import tempfile
 # 独立测试数据库（TestClient 内共享同一进程 token 解析，不需要跨进程）
 _tmp = tempfile.mkdtemp(prefix="salted_fish_test_")
 os.environ["SALTED_FISH_DB"] = os.path.join(_tmp, "test.db")
+os.environ["SALTED_FISH_RATE_LIMIT"] = "0"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -18,10 +19,14 @@ client = TestClient(app)
 
 
 def login(nickname: str, grade_class: str = "三年级2班") -> dict:
-    return client.post(
-        "/auth/login",
-        json={"code": f"test-{nickname}", "nickname": nickname, "grade_class": grade_class},
+    """微信授权登录 + 完善资料（对齐上线流程）。"""
+    r = client.post("/auth/login", json={"code": f"test-{nickname}"}).json()
+    token = r["token"]
+    user = client.put(
+        f"/auth/profile?token={token}",
+        json={"nickname": nickname, "grade_class": grade_class, "school": "示范小学"},
     ).json()
+    return {"token": token, "user": user}
 
 
 def token_of(nickname: str) -> str:
@@ -39,6 +44,23 @@ def admin_login(email: str, password: str):
         json={"email": email, "encrypted_password": base64.b64encode(cipher).decode()},
     )
 
+
+
+def admin_web_login(email: str, password: str) -> str:
+    """RSA 加密密码后登录独立后台，返回 web token。"""
+    import base64
+    from app.services import admin_crypto
+
+    pem = admin_crypto.public_key_pem().encode()
+    enc = base64.b64encode(
+        admin_crypto.encrypt_with_public(pem, password.encode("utf-8"))
+    ).decode()
+    r = client.post(
+        "/admin-auth/login",
+        json={"email": email, "encrypted_password": enc},
+    )
+    assert r.status_code == 200, r.text
+    return r.json()["token"]
 
 def bootstrap_org(*tokens: str, name: str = "测试组织") -> dict:
     """创建组织 → 平台审核通过 → 其余用户用邀请码加入并由组织管理员通过。"""
@@ -90,7 +112,7 @@ def test_full_swap_flow():
         f"/items?token={ta}",
         json={
             "name": "闪耀奥特曼卡 HR",
-            "category": "奥特曼卡",
+            "category": "卡牌贴纸",
             "condition": "九成新",
             "want_tags": ["绘本"],
             "description": "卡面无划痕",
@@ -99,15 +121,16 @@ def test_full_swap_flow():
     assert r.status_code == 200, r.text
     item_a = r.json()
     assert item_a["value_coins"] == 3, item_a
+    assert item_a["ai_value_coins"] == 3, item_a
     assert login("测试小明")["user"]["coin_balance"] == 12
 
     r = client.post(
         f"/items?token={tb}",
         json={
             "name": "神奇校车 1-5 册",
-            "category": "绘本/课外书",
+            "category": "绘本图书",
             "condition": "九成新",
-            "want_tags": ["奥特曼卡"],
+            "want_tags": ["卡牌贴纸"],
         },
     )
     item_b = r.json()
@@ -117,7 +140,7 @@ def test_full_swap_flow():
         f"/items?token={tb}",
         json={
             "name": "晨光中性笔 5 支",
-            "category": "文具",
+            "category": "文具学习",
             "condition": "崭新",
             "want_tags": ["绘本"],
         },
@@ -180,14 +203,38 @@ def test_full_swap_flow():
 
 
 def test_ai_pricing_endpoint():
-    r = client.post(
+    tok = login("估价同学")["token"]
+    anon = client.post(
         "/items/ai-pricing",
-        json={"name": "限量版赛罗卡", "category": "奥特曼卡", "condition": "崭新"},
+        json={"name": "限量版赛罗卡", "category": "卡牌贴纸", "condition": "崭新"},
+    )
+    assert anon.status_code == 401
+    r = client.post(
+        f"/items/ai-pricing?token={tok}",
+        json={"name": "限量版赛罗卡", "category": "卡牌贴纸", "condition": "崭新"},
     )
     assert r.status_code == 200
     data = r.json()
     assert data["suggested_coins"] >= 3
     assert "建议" in data["explanation"]
+    bearer = client.post(
+        "/items/ai-pricing",
+        headers={"Authorization": f"Bearer {tok}"},
+        json={"name": "限量版赛罗卡", "category": "卡牌贴纸", "condition": "崭新"},
+    )
+    assert bearer.status_code == 200
+    no_upload = client.post("/upload", files={"file": ("a.png", b"not-a-real-png", "image/png")})
+    assert no_upload.status_code == 401
+
+    bearer = client.post(
+        "/items/ai-pricing",
+        headers={"Authorization": f"Bearer {tok}"},
+        json={"name": "限量版赛罗卡", "category": "卡牌贴纸", "condition": "崭新"},
+    )
+    assert bearer.status_code == 200
+
+    no_upload = client.post("/upload", files={"file": ("a.png", b"not-a-real-png", "image/png")})
+    assert no_upload.status_code == 401
 
 
 def test_cancel_flow_with_penalty():
@@ -198,11 +245,11 @@ def test_cancel_flow_with_penalty():
 
     ia = client.post(
         f"/items?token={ta}",
-        json={"name": "旧跳绳", "category": "体育用品", "condition": "有磨损", "want_tags": []},
+        json={"name": "旧跳绳", "category": "体育户外", "condition": "有磨损", "want_tags": []},
     ).json()
     ib = client.post(
         f"/items?token={tb}",
-        json={"name": "橡皮擦", "category": "文具", "condition": "九成新", "want_tags": []},
+        json={"name": "橡皮擦", "category": "文具学习", "condition": "九成新", "want_tags": []},
     ).json()
     assert ia["value_coins"] == 2
 
@@ -290,7 +337,7 @@ def test_report_and_admin_moderation():
 
     item2 = client.post(
         f"/items?token={tk}",
-        json={"name": "正常橡皮", "category": "文具", "condition": "崭新", "want_tags": []},
+        json={"name": "正常橡皮", "category": "文具学习", "condition": "崭新", "want_tags": []},
     ).json()
     client.post(
         f"/items/{item2['id']}/report?token={tp}",
@@ -312,7 +359,7 @@ def test_report_and_admin_moderation():
 def test_category_admin_crud():
     pub = client.get("/items/categories").json()["categories"]
     names = [c["name"] for c in pub]
-    assert "奥特曼卡" in names and "其他" in names
+    assert "卡牌贴纸" in names and "其他" in names
     assert pub[-1]["name"] == "其他"
 
     kid = login("分类路人甲")
@@ -342,6 +389,7 @@ def test_category_admin_crud():
                     json={"value_base": 8})
     assert up.status_code == 200 and up.json()["value_base"] == 8
     est = client.post("/items/ai-pricing",
+                      params={"token": tam},
                       json={"name": "全新乐高", "category": "乐高玩具",
                             "description": "全新零件", "condition": "崭新"}).json()
     assert est["suggested_coins"] >= 8
@@ -369,11 +417,11 @@ def test_org_invite_and_isolation():
 
     ia = client.post(
         f"/items?token={ta}",
-        json={"name": "甲校卡牌", "category": "奥特曼卡", "condition": "九成新"},
+        json={"name": "甲校卡牌", "category": "卡牌贴纸", "condition": "九成新"},
     ).json()
     client.post(
         f"/items?token={tb}",
-        json={"name": "乙校绘本", "category": "绘本/课外书", "condition": "九成新"},
+        json={"name": "乙校绘本", "category": "绘本图书", "condition": "九成新"},
     )
 
     list_a = client.get(f"/items?token={ta}").json()
@@ -477,6 +525,8 @@ def test_llm_provider_crud():
             "is_active": True,
             "sort_order": 1,
             "timeout_sec": 20,
+            "support_image": True,
+            "support_audio": False,
             "note": "测试",
         },
     )
@@ -485,6 +535,8 @@ def test_llm_provider_crud():
     assert row["api_key_set"] is True
     assert "abcdefg" not in row["api_key"]  # 脱敏
     assert "…" in row["api_key"] or "****" in row["api_key"]
+    assert row["support_image"] is True
+    assert row["support_audio"] is False
     pid = row["id"]
 
     listed = client.get("/admin/llm/providers", params={"token": tok}).json()
@@ -494,11 +546,12 @@ def test_llm_provider_crud():
     up = client.put(
         f"/admin/llm/providers/{pid}",
         params={"token": tok},
-        json={"name": "硅基免费1-改", "api_key": ""},
+        json={"name": "硅基免费1-改", "api_key": "", "support_image": False},
     )
     assert up.status_code == 200
     assert up.json()["name"] == "硅基免费1-改"
     assert up.json()["api_key_set"] is True
+    assert up.json()["support_image"] is False
 
     # active_endpoints 能读到
     from app.services import llm_service
@@ -506,6 +559,260 @@ def test_llm_provider_crud():
     eps = llm_service.active_endpoints(db)
     db.close()
     assert any(e["name"] == "硅基免费1-改" for e in eps)
+    # support_image=False 的配置不应进入视觉候选
+    vision_eps = [e for e in eps if e.get("support_image", True)]
+    assert all(e["name"] != "硅基免费1-改" for e in vision_eps)
 
     dele = client.delete(f"/admin/llm/providers/{pid}", params={"token": tok})
     assert dele.status_code == 200
+
+
+def test_onboarding_profile_gate():
+    """登录可无资料；完善资料后 profile_completed=True。"""
+    r = client.post("/auth/login", json={"code": "test-newbie-device"}).json()
+    assert r["user"]["profile_completed"] is False
+    assert r["user"]["nickname"] == "小咸鱼"
+    tok = r["token"]
+    u = client.put(
+        f"/auth/profile?token={tok}",
+        json={"nickname": "新同学", "grade_class": "一年级1班", "school": "示范小学"},
+    ).json()
+    assert u["profile_completed"] is True
+    assert u["nickname"] == "新同学"
+    me = client.get(f"/auth/me?token={tok}").json()
+    assert me["profile_completed"] is True
+
+
+def test_member_can_get_invite():
+    """正式成员（非管理员）也可查看邀请码分享。"""
+    owner = login("邀请主理人")
+    member = login("邀请成员甲")
+    org = bootstrap_org(owner["token"], member["token"], name="邀请测试校")
+
+    # 普通成员可读邀请码
+    r = client.get(f"/orgs/{org['id']}/invite", params={"token": member["token"]})
+    assert r.status_code == 200, r.text
+    assert r.json()["invite_code"]
+    assert r.json()["can_refresh"] is False
+    assert r.json()["invite_enabled"] is True
+
+    # 管理员可刷新
+    assert client.post(
+        f"/orgs/{org['id']}/invite/refresh", params={"token": owner["token"]}
+    ).status_code == 200
+    # 普通成员不能刷新
+    assert client.post(
+        f"/orgs/{org['id']}/invite/refresh", params={"token": member["token"]}
+    ).status_code == 403
+
+
+def test_org_invite_controls():
+    """关闭邀请 / 失效邀请码 / 免审加入。"""
+    owner = login("管控主理人")
+    joiner = login("管控新同学")
+    org = bootstrap_org(owner["token"], name="管控测试校")
+    code = org["invite_code"]
+    oid = org["id"]
+    ot = owner["token"]
+    jt = joiner["token"]
+
+    # 关闭邀请后不可加入
+    r = client.put(
+        f"/orgs/{oid}/settings?token={ot}",
+        json={"invite_enabled": False},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["invite_enabled"] is False
+    assert client.post(f"/orgs/join?token={jt}", json={"invite_code": code}).status_code == 400
+
+    # 重新开启
+    assert client.put(
+        f"/orgs/{oid}/settings?token={ot}",
+        json={"invite_enabled": True},
+    ).status_code == 200
+
+    # 失效邀请码后旧码不可用
+    inv = client.post(f"/orgs/{oid}/invite/invalidate", params={"token": ot})
+    assert inv.status_code == 200, inv.text
+    assert client.post(f"/orgs/join?token={jt}", json={"invite_code": code}).status_code == 404
+
+    # 换发新码 + 关闭审核 → 直接 active
+    new_code = client.post(
+        f"/orgs/{oid}/invite/refresh", params={"token": ot}
+    ).json()["invite_code"]
+    assert new_code and new_code != code
+    assert client.put(
+        f"/orgs/{oid}/settings?token={ot}",
+        json={"join_need_review": False},
+    ).status_code == 200
+    jr = client.post(f"/orgs/join?token={jt}", json={"invite_code": new_code})
+    assert jr.status_code == 200, jr.text
+    assert jr.json()["membership"]["status"] == "active"
+
+    # 成员侧：关闭邀请后看不到码
+    client.put(f"/orgs/{oid}/settings?token={ot}", json={"invite_enabled": False})
+    view = client.get(f"/orgs/{oid}/invite", params={"token": ot}).json()
+    assert view["invite_enabled"] is False
+    assert view["invite_code"] == ""
+
+
+def test_org_create_quota_and_raise():
+    """默认每人可创建 3 个；用满后需提额申请，超管可配默认额度并审核。"""
+    owner = login("额度主理人")
+    tok = owner["token"]
+    admin = login("管理员")
+    at = admin["token"]
+
+    q = client.get(f"/orgs/create-quota?token={tok}").json()
+    assert q["limit"] == 3
+    assert q["can_create"] is True
+
+    # 平台改默认额度为 1，便于测满额
+    assert client.put(
+        "/admin/org-settings",
+        params={"token": at},
+        json={"max_orgs_per_creator": 1},
+    ).status_code == 200
+    q = client.get(f"/orgs/create-quota?token={tok}").json()
+    assert q["limit"] == 1
+
+    # 创建 1 个占满
+    r = client.post(
+        f"/orgs/apply?token={tok}",
+        json={"name": "额度一号校", "org_type": "school", "description": "测"},
+    )
+    assert r.status_code == 200, r.text
+    # 待审也占名额，不能再创建
+    r2 = client.post(
+        f"/orgs/apply?token={tok}",
+        json={"name": "额度二号校", "org_type": "school", "description": "测"},
+    )
+    assert r2.status_code == 400
+
+    # 提额申请：原因 + 证明
+    app = client.post(
+        f"/orgs/quota-applications?token={tok}",
+        json={
+            "reason": "本人同时任教两个年级班主任，需要分别为各班创建组织便于管理。",
+            "proof_urls": ["/uploads/fake-teacher-cert.png"],
+            "requested_limit": 5,
+        },
+    )
+    assert app.status_code == 200, app.text
+    app_id = app.json()["id"]
+
+    # 超管通过
+    ok = client.post(
+        f"/admin/org-quota-applications/{app_id}/review",
+        params={"token": at},
+        json={"action": "approve", "reason": ""},
+    )
+    assert ok.status_code == 200, ok.text
+    q = client.get(f"/orgs/create-quota?token={tok}").json()
+    assert q["limit"] == 5
+    assert q["can_create"] is True
+
+    client.put(
+        "/admin/org-settings",
+        params={"token": at},
+        json={"max_orgs_per_creator": 3},
+    )
+
+
+def test_ai_moderation_gate():
+    """关闭合规时放行；开启后关键词拦截不宜上架物品。"""
+    settings = client.get("/items/ai-settings").json()
+    assert "ai_pricing_enabled" in settings
+    assert settings["ai_moderation_enabled"] is False
+
+    admin = login("管理员")
+    at = admin["token"]
+    # 开启合规检测
+    r = client.put(
+        "/admin/ai-settings",
+        params={"token": at},
+        json={"ai_moderation_enabled": True},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["ai_moderation_enabled"] is True
+
+    a = login("合规检测甲")
+    ta = a["token"]
+    bootstrap_org(ta, name="合规检测校")
+
+    bad = client.post(
+        f"/items?token={ta}",
+        json={
+            "name": "电子烟一套",
+            "category": "其他",
+            "condition": "九成新",
+            "want_tags": [],
+            "description": "闲置电子烟",
+        },
+    )
+    assert bad.status_code == 400, bad.text
+    assert "不宜上架" in bad.json()["detail"] or "电子烟" in bad.json()["detail"]
+
+    good = client.post(
+        f"/items?token={ta}",
+        json={
+            "name": "未拆封中性笔",
+            "category": "文具学习",
+            "condition": "崭新",
+            "want_tags": ["绘本"],
+        },
+    )
+    # 开启后无 LLM 时也会拒绝（fail closed）；关键词未命中但无模型
+    # 若无模型：400；有环境模型则可能 200。测试环境通常无 LLM。
+    if good.status_code == 400:
+        assert "大模型" in good.json()["detail"] or "合规" in good.json()["detail"] or "重试" in good.json()["detail"]
+    else:
+        assert good.status_code == 200, good.text
+
+    # 关闭合规
+    assert client.put(
+        "/admin/ai-settings",
+        params={"token": at},
+        json={"ai_moderation_enabled": False},
+    ).status_code == 200
+
+    ok = client.post(
+        f"/items?token={ta}",
+        json={
+            "name": "橡皮一块",
+            "category": "文具学习",
+            "condition": "九成新",
+            "want_tags": [],
+        },
+    )
+    assert ok.status_code == 200, ok.text
+
+
+def test_ai_and_user_value_stored_separately():
+    """AI 估值与物主自己估值分开存，改自己估值不覆盖 AI。"""
+    a = login("估值对照甲")
+    ta = a["token"]
+    bootstrap_org(ta, name="估值对照校")
+    r = client.post(
+        f"/items?token={ta}",
+        json={
+            "name": "未拆封中性笔",
+            "category": "文具学习",
+            "condition": "崭新",
+            "want_tags": [],
+            "value_coins": 8,
+        },
+    )
+    assert r.status_code == 200, r.text
+    item = r.json()
+    assert item["value_coins"] == 8
+    assert item["ai_value_coins"] >= 1
+    ai_saved = item["ai_value_coins"]
+    up = client.put(
+        f"/items/{item['id']}?token={ta}",
+        json={"value_coins": 5},
+    )
+    assert up.status_code == 200, up.text
+    assert up.json()["value_coins"] == 5
+    assert up.json()["ai_value_coins"] == ai_saved
+

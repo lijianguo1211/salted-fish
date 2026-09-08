@@ -3,6 +3,8 @@
 跑法：python -m app.seed
 （自动检测：表不存在则建表；数据已存在则跳过）
 """
+import asyncio
+
 from .config import SessionLocal, engine, Base
 from .models import Item, Organization, OrgMembership, User
 from .services import category_service, coin_service, org_service
@@ -19,9 +21,9 @@ def seed():
             return
 
         users_data = [
-            ("陈小明", "三年级2班", "奥特曼卡"), ("李朵朵", "三年级2班", "绘本"),
-            ("王浩浩", "三年级1班", "玩具"), ("赵彤彤", "三年级2班", "文具"),
-            ("孙一一", "四年级1班", "体育用品"),
+            ("陈小明", "三年级2班", "卡牌贴纸"), ("李朵朵", "三年级2班", "绘本图书"),
+            ("王浩浩", "三年级1班", "积木拼插"), ("赵彤彤", "三年级2班", "文具学习"),
+            ("孙一一", "四年级1班", "体育户外"),
         ]
         users = []
         for nickname, grade_class, _ in users_data:
@@ -32,6 +34,7 @@ def seed():
                 role="student",
                 school="示范小学",
                 grade_class=grade_class,
+                profile_completed=True,
             )
             db.add(u)
             db.flush()
@@ -68,18 +71,20 @@ def seed():
 
         items_data = [
             # (owner_idx, name, category, condition, want, desc)
-            (0, "闪耀奥特曼卡 HR", "奥特曼卡", "九成新", "绘本,奥特曼卡", "光荣赛罗 HR，卡面无划痕"),
-            (0, "赛罗奥特曼双面卡", "奥特曼卡", "八成新", "玩具", "换了三张重复的"),
-            (1, "《神奇校车》1-5 册", "绘本/课外书", "九成新", "奥特曼卡,文具", "看完一遍，无涂鸦"),
-            (1, "《米小圈上学记》全套", "绘本/课外书", "八成新", "绘本/课外书", "第 12 页有姓名贴"),
-            (2, "乐高小汽车积木", "玩具", "八成新", "奥特曼卡", "缺一个轮子盖，其他齐全"),
-            (3, "未拆封中性笔 5 支", "文具", "崭新", "绘本/课外书", "义卖剩的，全新"),
-            (4, "跳绳（可调节）", "体育用品", "有磨损", "玩具", "学校达标款"),
-            (2, "整套恐龙模型", "玩具", "九成新", "体育用品", "12 只装，含霸王龙"),
+            (0, "闪耀奥特曼卡 HR", "卡牌贴纸", "九成新", "绘本图书,卡牌贴纸", "光荣赛罗 HR，卡面无划痕"),
+            (0, "赛罗奥特曼双面卡", "卡牌贴纸", "八成新", "积木拼插", "换了三张重复的"),
+            (1, "《神奇校车》1-5 册", "绘本图书", "九成新", "卡牌贴纸,文具学习", "看完一遍，无涂鸦"),
+            (1, "《米小圈上学记》全套", "绘本图书", "八成新", "绘本图书", "第 12 页有姓名贴"),
+            (2, "乐高小汽车积木", "积木拼插", "八成新", "卡牌贴纸", "缺一个轮子盖，其他齐全"),
+            (3, "未拆封中性笔 5 支", "文具学习", "崭新", "绘本图书", "义卖剩的，全新"),
+            (4, "跳绳（可调节）", "体育户外", "有磨损", "益智桌游", "学校达标款"),
+            (2, "整套恐龙模型", "手办模型", "九成新", "体育户外", "12 只装，含霸王龙"),
         ]
         cats_map = category_service.categories_map(db)
         for owner_idx, name, category, condition, want, desc in items_data:
-            est = estimate_value(name, category, desc, condition, categories=cats_map)
+            est = asyncio.run(
+                estimate_value(name, category, desc, condition, categories=cats_map)
+            )
             item = Item(
                 owner_id=users[owner_idx].id,
                 org_id=org.id,
@@ -89,6 +94,7 @@ def seed():
                 images="",
                 condition=condition,
                 value_coins=est["suggested_coins"],
+                ai_value_coins=est["suggested_coins"],
                 want_tags=want,
             )
             db.add(item)

@@ -6,10 +6,16 @@ from pydantic import BaseModel, ConfigDict, Field
 
 # ---- 认证 ---------------------------------------------------------------
 class LoginRequest(BaseModel):
-    code: str = ""                    # wx.login() 的 code（演示模式可空）
-    nickname: str = Field(..., max_length=32)
+    code: str = ""                    # wx.login() 的 code（演示模式可为设备标识）
+    nickname: str = Field("", max_length=32)  # 可选；完善资料在后续步骤
     grade_class: str = Field("", max_length=32)
     school: str = Field("", max_length=64)
+
+
+class ProfileUpdate(BaseModel):
+    nickname: str = Field(..., min_length=1, max_length=32)
+    grade_class: str = Field(..., min_length=1, max_length=32)
+    school: str = Field(..., min_length=1, max_length=64)
 
 
 class UserOut(BaseModel):
@@ -21,6 +27,7 @@ class UserOut(BaseModel):
     grade_class: str
     coin_balance: int
     avatar: str
+    profile_completed: bool = False
     active_org_id: int = 0
     active_org_name: str = ""
 
@@ -35,7 +42,7 @@ class ItemCreate(BaseModel):
     images: List[str] = Field(default_factory=list, max_length=6)
     condition: str = Field("九成新", max_length=16)
     want_tags: List[str] = Field(default_factory=list, max_length=10)
-    value_coins: Optional[int] = Field(None, ge=0, le=15)  # 手动覆盖 AI 建议值
+    value_coins: Optional[int] = Field(None, ge=0, le=15)  # 物主自己估值；空则沿用 AI
 
 
 class ItemUpdate(BaseModel):
@@ -59,6 +66,7 @@ class ItemOut(BaseModel):
     images: List[str]
     condition: str
     value_coins: int
+    ai_value_coins: int = 0
     want_tags: List[str]
     status: str
     reported: int
@@ -196,6 +204,9 @@ class LlmProviderCreate(BaseModel):
     is_active: bool = True
     sort_order: int = 0
     timeout_sec: int = Field(30, ge=5, le=120)
+    support_text: bool = True
+    support_image: bool = True         # 多模态 / 视觉输入
+    support_audio: bool = False        # 音频输入
     note: Optional[str] = ""
 
 
@@ -208,4 +219,7 @@ class LlmProviderUpdate(BaseModel):
     is_active: Optional[bool] = None
     sort_order: Optional[int] = None
     timeout_sec: Optional[int] = Field(None, ge=5, le=120)
+    support_text: Optional[bool] = None
+    support_image: Optional[bool] = None     # 多模态 / 视觉输入
+    support_audio: Optional[bool] = None     # 音频输入
     note: Optional[str] = None

@@ -2,8 +2,8 @@
 
 设计要点：
 - User.parent_openid 与 User.openid 分离 —— 孩子的操作全部需要家长微信确认。
-- Item.value_coins 是 AI 建议参考值（枚），不是价格；交换不等值时由差价档位弥补，
-  实际上交换是纯以物换物，value_coins 只用于匹配排序与展示。
+- Item.value_coins 是物主自己估的参考值（枚），ai_value_coins 是 AI 估值；
+  都不是价格，交换是纯以物换物，两套数字只用于展示对照与匹配参考。
 - Swap.both_confirm 完成时同步发币。
 """
 from datetime import datetime
@@ -43,6 +43,9 @@ class User(TimestampMixin, Base):
     coin_balance = Column(Integer, default=0)              # 咸鱼币余额（积分）
     avatar = Column(String(255), default="")
     is_active = Column(Boolean, default=True)
+    profile_completed = Column(Boolean, default=False)  # 完善昵称/班级后才可进鱼塘
+    # 个人可创建组织上限；NULL 表示使用平台默认（见 AppSetting max_orgs_per_creator）
+    org_create_limit = Column(Integer, nullable=True)
     # use_alter：与 Organization.creator_id 形成环，建表时延后加约束
     active_org_id = Column(
         Integer, ForeignKey("organizations.id", use_alter=True, name="fk_users_active_org"),
@@ -66,6 +69,8 @@ class User(TimestampMixin, Base):
             "grade_class": self.grade_class,
             "coin_balance": self.coin_balance,
             "avatar": self.avatar,
+            "profile_completed": bool(self.profile_completed),
+            "org_create_limit": self.org_create_limit,
             "active_org_id": self.active_org_id or 0,
             "active_org_name": self.active_org.name if self.active_org else "",
         }
@@ -107,6 +112,8 @@ class Organization(TimestampMixin, Base):
     status = Column(String(16), default="pending", index=True)  # pending / approved / rejected
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     invite_code = Column(String(16), unique=True, nullable=True, index=True)
+    invite_enabled = Column(Boolean, default=True)       # False=关闭邀请，禁止新成员加入
+    join_need_review = Column(Boolean, default=True)     # True=加入需组织管理员审核
     reject_reason = Column(String(255), default="")
     reviewed_by = Column(Integer, default=0)  # 平台管理员 id（AdminUser 或 User）
     reviewed_at = Column(DateTime, nullable=True)
@@ -126,12 +133,16 @@ class Organization(TimestampMixin, Base):
             "reject_reason": self.reject_reason or "",
             "reviewed_at": self.reviewed_at.strftime("%Y-%m-%d %H:%M") if self.reviewed_at else "",
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "invite_enabled": bool(self.invite_enabled if self.invite_enabled is not None else True),
+            "join_need_review": bool(self.join_need_review if self.join_need_review is not None else True),
             "member_count": self.memberships.filter_by(status="active").count()
             if self.memberships is not None
             else 0,
         }
         if include_invite:
-            data["invite_code"] = self.invite_code or ""
+            # 关闭邀请或已失效时不对外暴露码
+            show = data["invite_enabled"] and bool(self.invite_code)
+            data["invite_code"] = self.invite_code if show else ""
         return data
 
 
@@ -179,7 +190,23 @@ class OrgMembership(TimestampMixin, Base):
             "org_name": self.org.name if self.org else "",
             "org_status": self.org.status if self.org else "",
             "org_type": self.org.org_type if self.org else "",
-            "invite_code": self.org.invite_code if self.org and self.is_org_admin else "",
+            "invite_code": (
+                self.org.invite_code
+                if (
+                    self.org
+                    and self.status == "active"
+                    and self.org.status == "approved"
+                    and (self.org.invite_enabled if self.org.invite_enabled is not None else True)
+                    and self.org.invite_code
+                )
+                else ""
+            ),
+            "invite_enabled": bool(
+                self.org.invite_enabled if self.org and self.org.invite_enabled is not None else True
+            ),
+            "join_need_review": bool(
+                self.org.join_need_review if self.org and self.org.join_need_review is not None else True
+            ),
         }
 
 
@@ -197,7 +224,8 @@ class Item(TimestampMixin, Base):
     description = Column(Text, default="")
     images = Column(String(500), default="")      # 逗号分隔的图片 URL 列表
     condition = Column(String(16), default="九成新")
-    value_coins = Column(Integer, default=0)      # AI 傍议参考枚数（非价格）
+    value_coins = Column(Integer, default=0)      # 物主自己估的参考枚数（非价格）
+    ai_value_coins = Column(Integer, default=0)   # AI 估值枚数，供对照参考
     want_tags = Column(String(255), default="")   # 想换什么，逗号分隔
     status = Column(String(16), default="on_shelf")  # on_shelf / swapping / swapped / off_shelf / reported / removed
     reported = Column(Integer, default=0)              # 被举报次数（>0 即出现在待办中）
@@ -220,6 +248,7 @@ class Item(TimestampMixin, Base):
             "images": [img for img in self.images.split(",") if img],
             "condition": self.condition,
             "value_coins": self.value_coins,
+            "ai_value_coins": self.ai_value_coins or 0,
             "want_tags": [t for t in self.want_tags.split(",") if t],
             "status": self.status,
             "reported": self.reported,
@@ -404,7 +433,7 @@ class Report(TimestampMixin, Base):
 class LlmProvider(TimestampMixin, Base):
     """大模型 API 配置（多 Key / 多厂商，免费额度挂了可切下一家）。
 
-    统一按 OpenAI 兼容协议调用 /chat/completions。
+    通过 OpenAI SDK 调用兼容网关（chat.completions）。
     """
 
     __tablename__ = "llm_providers"
@@ -418,6 +447,10 @@ class LlmProvider(TimestampMixin, Base):
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)                   # 越小越优先
     timeout_sec = Column(Integer, default=30)
+    # 支持的输入能力：多类输入开关。视觉/图像输入由 support_image 表示。
+    support_text = Column(Boolean, default=True)
+    support_image = Column(Boolean, default=True)             # 多模态 / 视觉输入
+    support_audio = Column(Boolean, default=False)            # 音频输入
     note = Column(String(255), default="")
     last_error = Column(String(255), default="")
     last_ok_at = Column(DateTime, nullable=True)
@@ -441,8 +474,61 @@ class LlmProvider(TimestampMixin, Base):
             "is_active": self.is_active,
             "sort_order": self.sort_order,
             "timeout_sec": self.timeout_sec,
+            "support_text": bool(self.support_text),
+            "support_image": bool(self.support_image),
+            "support_audio": bool(self.support_audio),
             "note": self.note or "",
             "last_error": self.last_error or "",
             "last_ok_at": self.last_ok_at.strftime("%Y-%m-%d %H:%M") if self.last_ok_at else "",
             "fail_count": self.fail_count or 0,
+        }
+
+
+class AppSetting(TimestampMixin, Base):
+    """平台可配置项（key-value）。"""
+
+    __tablename__ = "app_settings"
+
+    key = Column(String(64), primary_key=True)
+    value = Column(String(255), default="")
+
+    def to_dict(self):
+        return {"key": self.key, "value": self.value or ""}
+
+
+class OrgQuotaApplication(TimestampMixin, Base):
+    """超额创建组织额度申请：说明原因 + 附件证明（如教师资格证）。"""
+
+    __tablename__ = "org_quota_applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    reason = Column(Text, nullable=False, default="")
+    proof_urls = Column(Text, default="")  # 逗号分隔的 /uploads/xxx
+    requested_limit = Column(Integer, nullable=False)  # 希望提到的总上限
+    status = Column(String(16), default="pending", index=True)  # pending / approved / rejected
+    reject_reason = Column(String(255), default="")
+    reviewed_by = Column(Integer, default=0)
+    reviewed_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", foreign_keys=[user_id])
+
+    def proof_list(self) -> list[str]:
+        raw = (self.proof_urls or "").strip()
+        if not raw:
+            return []
+        return [u.strip() for u in raw.split(",") if u.strip()]
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "nickname": self.user.nickname if self.user else "",
+            "reason": self.reason or "",
+            "proof_urls": self.proof_list(),
+            "requested_limit": self.requested_limit,
+            "status": self.status,
+            "reject_reason": self.reject_reason or "",
+            "reviewed_at": self.reviewed_at.strftime("%Y-%m-%d %H:%M") if self.reviewed_at else "",
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
         }

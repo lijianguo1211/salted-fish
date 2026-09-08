@@ -10,12 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..config import get_db
-from ..models import AdminUser, Category, Item, LlmProvider, Organization, Report, User
+from ..models import AdminUser, Category, Item, LlmProvider, Organization, OrgQuotaApplication, Report, User
 from ..routers.auth import get_current_user
 from ..schemas import CategoryCreate, CategoryUpdate, LlmProviderCreate, LlmProviderUpdate, Msg, OrgReviewIn, ReportHandle
 from ..services import admin_auth as admin_auth_svc
 from ..services import llm_service
 from ..services import org_service
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -330,6 +331,111 @@ def admin_review_org(
     return org.to_dict(include_invite=(org.status == "approved"))
 
 
+class AdminOrgLimitIn(BaseModel):
+    max_orgs_per_creator: int = Field(..., ge=1, le=50)
+
+
+class QuotaReviewIn(BaseModel):
+    action: str = Field(..., max_length=16)  # approve / reject
+    reason: str = Field("", max_length=255)
+
+
+@router.get("/org-settings")
+def admin_org_settings(token: str = "", db: Session = Depends(get_db)):
+    get_current_admin(token, db)
+    return {"max_orgs_per_creator": org_service.default_max_orgs(db)}
+
+
+@router.put("/org-settings")
+def admin_update_org_settings(
+    body: AdminOrgLimitIn,
+    token: str = "",
+    db: Session = Depends(get_db),
+):
+    get_current_admin(token, db)
+    org_service.set_setting(
+        db, org_service.SETTING_MAX_ORGS, str(body.max_orgs_per_creator)
+    )
+    db.commit()
+    return {"max_orgs_per_creator": org_service.default_max_orgs(db)}
+
+
+@router.get("/org-quota-applications")
+def admin_list_quota_apps(status: str = "pending", token: str = "", db: Session = Depends(get_db)):
+    get_current_admin(token, db)
+    q = db.query(OrgQuotaApplication)
+    if status != "all":
+        q = q.filter(OrgQuotaApplication.status == status)
+    rows = q.order_by(OrgQuotaApplication.created_at.desc()).limit(100).all()
+    return [r.to_dict() for r in rows]
+
+
+@router.post("/org-quota-applications/{app_id}/review")
+def admin_review_quota_app(
+    app_id: int,
+    body: QuotaReviewIn,
+    token: str = "",
+    db: Session = Depends(get_db),
+):
+    admin = get_current_admin(token, db)
+    row = db.get(OrgQuotaApplication, app_id)
+    if not row:
+        raise HTTPException(404, "申请不存在")
+    if row.status != "pending":
+        raise HTTPException(400, "该申请已处理")
+
+    if body.action == "approve":
+        user = db.get(User, row.user_id)
+        if not user:
+            raise HTTPException(404, "申请人不存在")
+        user.org_create_limit = row.requested_limit
+        row.status = "approved"
+        row.reject_reason = ""
+    elif body.action == "reject":
+        row.status = "rejected"
+        row.reject_reason = (body.reason or "").strip() or "未通过"
+    else:
+        raise HTTPException(400, "action 只能是 approve / reject")
+
+    row.reviewed_by = admin.id
+    row.reviewed_at = datetime.utcnow()
+    db.commit()
+    db.refresh(row)
+    return row.to_dict()
+
+
+# ---- AI 能力开关（估值 / 合规检测） --------------------------------------
+class AiSettingsIn(BaseModel):
+    ai_pricing_enabled: bool | None = None
+    ai_moderation_enabled: bool | None = None
+
+
+@router.get("/ai-settings")
+def admin_get_ai_settings(token: str = "", db: Session = Depends(get_db)):
+    get_current_admin(token, db)
+    from ..services import ai_moderation
+
+    return ai_moderation.get_ai_settings(db)
+
+
+@router.put("/ai-settings")
+def admin_update_ai_settings(
+    body: AiSettingsIn,
+    token: str = "",
+    db: Session = Depends(get_db),
+):
+    get_current_admin(token, db)
+    from ..services import ai_moderation
+
+    result = ai_moderation.set_ai_settings(
+        db,
+        ai_pricing_enabled=body.ai_pricing_enabled,
+        ai_moderation_enabled=body.ai_moderation_enabled,
+    )
+    db.commit()
+    return result
+
+
 # ---- 大模型 API 配置（多 Key 故障切换） ---------------------------------
 @router.get("/llm/vendors")
 def admin_llm_vendors(token: str = "", db: Session = Depends(get_db)):
@@ -349,9 +455,9 @@ def admin_list_llm(token: str = "", db: Session = Depends(get_db)):
 @router.post("/llm/providers")
 def admin_create_llm(body: LlmProviderCreate, token: str = "", db: Session = Depends(get_db)):
     get_current_admin(token, db)
-    vendor = (body.vendor or "custom").strip().lower()
-    if vendor not in llm_service.KNOWN_VENDORS:
-        raise HTTPException(400, f"未知厂商，可选：{', '.join(llm_service.KNOWN_VENDORS)}")
+    vendor = (body.vendor or "custom").strip()
+    if not vendor:
+        raise HTTPException(400, "请填写厂商")
     row = LlmProvider(
         name=body.name.strip(),
         vendor=vendor,
@@ -361,6 +467,9 @@ def admin_create_llm(body: LlmProviderCreate, token: str = "", db: Session = Dep
         is_active=body.is_active,
         sort_order=body.sort_order,
         timeout_sec=body.timeout_sec,
+        support_text=body.support_text,
+        support_image=body.support_image,
+        support_audio=body.support_audio,
         note=(body.note or "").strip(),
     )
     db.add(row)
@@ -381,10 +490,10 @@ def admin_update_llm(
     if not row:
         raise HTTPException(404, "配置不存在")
     data = body.model_dump(exclude_unset=True)
-    if "vendor" in data and data["vendor"]:
-        vendor = data["vendor"].strip().lower()
-        if vendor not in llm_service.KNOWN_VENDORS:
-            raise HTTPException(400, f"未知厂商，可选：{', '.join(llm_service.KNOWN_VENDORS)}")
+    if "vendor" in data and data["vendor"] is not None:
+        vendor = data["vendor"].strip()
+        if not vendor:
+            raise HTTPException(400, "请填写厂商")
         row.vendor = vendor
     if "name" in data and data["name"] is not None:
         row.name = data["name"].strip()
@@ -401,6 +510,12 @@ def admin_update_llm(
         row.sort_order = data["sort_order"]
     if "timeout_sec" in data and data["timeout_sec"] is not None:
         row.timeout_sec = data["timeout_sec"]
+    if "support_text" in data and data["support_text"] is not None:
+        row.support_text = data["support_text"]
+    if "support_image" in data and data["support_image"] is not None:
+        row.support_image = data["support_image"]
+    if "support_audio" in data and data["support_audio"] is not None:
+        row.support_audio = data["support_audio"]
     if "note" in data:
         row.note = (data["note"] or "").strip()
     db.commit()
@@ -420,7 +535,7 @@ def admin_delete_llm(provider_id: int, token: str = "", db: Session = Depends(ge
 
 
 @router.post("/llm/providers/{provider_id}/test")
-def admin_test_llm(provider_id: int, token: str = "", db: Session = Depends(get_db)):
+async def admin_test_llm(provider_id: int, token: str = "", db: Session = Depends(get_db)):
     """探测连通性（文本请求，不烧视觉额度）。"""
     get_current_admin(token, db)
     row = db.get(LlmProvider, provider_id)
@@ -439,7 +554,7 @@ def admin_test_llm(provider_id: int, token: str = "", db: Session = Depends(get_
     try:
         from ..services.ai_pricing import probe_endpoint
 
-        result = probe_endpoint(endpoint)
+        result = await probe_endpoint(endpoint)
         llm_service.mark_success(db, row.id)
         return {"ok": True, "message": "连通正常", **result}
     except Exception as e:  # noqa: BLE001

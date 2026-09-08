@@ -1,32 +1,52 @@
 """物品路由：上架（AI 定价建议）、列表、我的、详情、下架、举报。"""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Header, Query, Request
 from sqlalchemy.orm import Session
 
 from ..config import REPORT_REASONS, get_db
 from ..models import Item, Report
 from ..schemas import AIPricingIn, AIPricingOut, ItemCreate, ItemOut, ItemUpdate, Msg, ReportCreate
-from ..routers.auth import get_current_user
+from ..routers.auth import get_current_user, resolve_token
 from ..services import coin_service
 from ..services.ai_pricing import estimate_value
+from ..services import ai_moderation
 from ..services import category_service
 from ..services import org_service
+from ..services import rate_limit
 
 router = APIRouter(prefix="/items", tags=["items"])
 
 
+async def _estimate_for_item(db: Session, name, category, description, condition, image_urls=None):
+    images = image_urls if ai_moderation.is_pricing_enabled(db) else None
+    return await estimate_value(
+        name, category, description, condition,
+        image_urls=images,
+        categories=category_service.categories_map(db),
+        db=db,
+    )
+
+
 @router.post("", response_model=ItemOut)
-def create_item(
+async def create_item(
     body: ItemCreate,
     token: str,
     db: Session = Depends(get_db),
 ):
     user = get_current_user(token, db)
     org, _ = org_service.require_active_org(db, user)
-    value = estimate_value(
-        body.name, body.category, body.description, body.condition,
-        categories=category_service.categories_map(db),
+    await ai_moderation.assert_item_allowed(
+        db,
+        name=body.name,
+        category=body.category,
+        description=body.description or "",
+        condition=body.condition or "",
+        image_urls=body.images or [],
     )
-    suggested = body.value_coins if body.value_coins is not None else value["suggested_coins"]
+    value = await _estimate_for_item(
+        db, body.name, body.category, body.description, body.condition, body.images or [],
+    )
+    ai_coins = value["suggested_coins"]
+    user_coins = body.value_coins if body.value_coins is not None else ai_coins
     item = Item(
         owner_id=user.id,
         org_id=org.id,
@@ -35,7 +55,8 @@ def create_item(
         description=body.description,
         images=",".join(body.images),
         condition=body.condition,
-        value_coins=suggested,
+        value_coins=user_coins,
+        ai_value_coins=ai_coins,
         want_tags=",".join(body.want_tags),
     )
     db.add(item)
@@ -93,6 +114,43 @@ def report_reasons():
     return {"reasons": REPORT_REASONS}
 
 
+@router.get("/ai-settings")
+def public_ai_settings(db: Session = Depends(get_db)):
+    """小程序可读：是否开启 AI 估值 / 合规检测。"""
+    return ai_moderation.get_ai_settings(db)
+
+
+@router.post("/ai-pricing", response_model=AIPricingOut)
+async def ai_pricing(
+    body: AIPricingIn,
+    request: Request,
+    token: str = "",
+    authorization: str | None = Header(None),
+    db: Session = Depends(get_db),
+):
+    user = get_current_user(resolve_token(token, authorization), db)
+    ip = rate_limit.client_ip(request)
+    rate_limit.check("ai-pricing", f"user:{user.id}", max_hits=10, window_sec=60)
+    rate_limit.check("ai-pricing", f"ip:{ip}", max_hits=30, window_sec=60)
+    return await _estimate_for_item(
+        db, body.name, body.category, body.description, body.condition, body.image_urls,
+    )
+
+
+@router.post("/ai-moderate")
+async def ai_moderate(body: AIPricingIn, token: str = "", db: Session = Depends(get_db)):
+    """上架前可预检；关闭开关时直接 allowed=true。需登录。"""
+    get_current_user(token, db)
+    return await ai_moderation.moderate_item(
+        db,
+        name=body.name,
+        category=body.category,
+        description=body.description or "",
+        condition=body.condition or "",
+        image_urls=body.image_urls or [],
+    )
+
+
 @router.get("/{item_id}", response_model=ItemOut)
 def get_item(item_id: int, token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
@@ -107,7 +165,7 @@ def get_item(item_id: int, token: str, db: Session = Depends(get_db)):
 
 
 @router.put("/{item_id}", response_model=ItemOut)
-def update_item(item_id: int, body: ItemUpdate, token: str, db: Session = Depends(get_db)):
+async def update_item(item_id: int, body: ItemUpdate, token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     item = db.get(Item, item_id)
     if not item or item.owner_id != user.id:
@@ -135,12 +193,21 @@ def update_item(item_id: int, body: ItemUpdate, token: str, db: Session = Depend
         if item.status == "swapped":
             raise HTTPException(400, "已交换出去的物品不能改状态")
         item.status = body.status
-    if body.condition is not None or body.name is not None or body.category is not None:
-        value = estimate_value(
-            item.name, item.category, item.description, item.condition,
-            categories=category_service.categories_map(db),
+    if body.condition is not None or body.name is not None or body.category is not None or body.description is not None or body.images is not None:
+        await ai_moderation.assert_item_allowed(
+            db,
+            name=item.name,
+            category=item.category,
+            description=item.description or "",
+            condition=item.condition or "",
+            image_urls=[u for u in (item.images or "").split(",") if u],
         )
-        item.value_coins = value["suggested_coins"]
+    if body.condition is not None or body.name is not None or body.category is not None:
+        images = [u for u in (item.images or "").split(",") if u]
+        value = await _estimate_for_item(
+            db, item.name, item.category, item.description, item.condition, images,
+        )
+        item.ai_value_coins = value["suggested_coins"]
     db.commit()
     db.refresh(item)
     return item.to_dict()
@@ -189,13 +256,3 @@ def report_item(item_id: int, body: ReportCreate, token: str, db: Session = Depe
     item.flagged = True
     db.commit()
     return Msg(message="举报成功，已提交管理员审核")
-
-
-# ---- AI 定价（独立接口，供小程序"拍照识别后先估价"交互） --------------------
-@router.post("/ai-pricing", response_model=AIPricingOut)
-def ai_pricing(body: AIPricingIn, db: Session = Depends(get_db)):
-    return estimate_value(
-        body.name, body.category, body.description, body.condition,
-        image_urls=body.image_urls,
-        categories=category_service.categories_map(db),
-    )

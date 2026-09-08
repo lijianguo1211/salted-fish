@@ -8,13 +8,14 @@
 """
 import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..config import get_db
 from ..models import AdminUser
 from ..services import admin_crypto
+from ..services import rate_limit
 from ..services.admin_auth import create_admin_token, parse_admin_token, verify_password
 
 router = APIRouter(prefix="/admin-auth", tags=["admin-auth"])
@@ -42,7 +43,8 @@ def public_key():
 
 
 @router.post("/login", response_model=AdminLoginOut)
-def admin_login(body: AdminLoginIn, db: Session = Depends(get_db)):
+def admin_login(body: AdminLoginIn, request: Request, db: Session = Depends(get_db)):
+    rate_limit.check("admin-login", rate_limit.client_ip(request), max_hits=8, window_sec=60)
     email = body.email.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(400, "邮箱格式不正确")

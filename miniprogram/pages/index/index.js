@@ -1,24 +1,22 @@
 const api = require('../../utils/api.js');
+const { FALLBACK_CATS, iconOf } = require('../../utils/category-icons.js');
 const app = getApp();
 
-const CATS = ['奥特曼卡', '绘本/课外书', '玩具', '文具', '体育用品', '其他'];
-const EMOJI = {
-  '奥特曼卡': '🃏',
-  '绘本/课外书': '📚',
-  '玩具': '🧸',
-  '文具': '✏️',
-  '体育用品': '⚽',
-  '其他': '🎁',
-};
+function helloNameOf(user) {
+  const n = ((user && user.nickname) || '').trim();
+  if (!n || n === '小咸鱼' || /^demo-/i.test(n)) return '小咸鱼';
+  return n;
+}
 
 Page({
   data: {
     user: null,
+    helloName: '小咸鱼',
     orgName: '',
     items: [],
     loaded: false,
     activeCat: '',
-    cats: CATS,
+    cats: FALLBACK_CATS,
     // 举报弹层
     showReport: false,
     reportItemId: null,
@@ -30,28 +28,22 @@ Page({
   },
 
   onShow() {
+    if (!app.ensureReady()) return;
     const user = app.globalData.user || api.getUser();
-    if (!user) {
-      wx.redirectTo({ url: '/pages/login/login' });
-      return;
-    }
-    if (!user.active_org_id) {
-      wx.redirectTo({ url: '/pages/org/list/list' });
-      return;
-    }
     this.setData({
       user,
-      orgName: user.active_org_name || '当前组织',
+      helloName: helloNameOf(user),
+      orgName: (user && user.active_org_name) || '当前组织',
     });
-    // 刷新用户（组织名可能刚切换过）
     api.request('/auth/me').then((u) => {
       api.setSession(api.getToken(), u);
       app.globalData.user = u;
-      if (!u.active_org_id) {
-        wx.redirectTo({ url: '/pages/org/list/list' });
-        return;
-      }
-      this.setData({ user: u, orgName: u.active_org_name || '当前组织' });
+      if (!app.ensureReady()) return;
+      this.setData({
+        user: u,
+        helloName: helloNameOf(u),
+        orgName: u.active_org_name || '当前组织',
+      });
     }).catch(() => {});
     this.loadCategories();
     this.loadItems();
@@ -154,7 +146,7 @@ Page({
           return {
             ...it,
             want_tags_text: txt.length > 16 ? txt.slice(0, 16) + '…' : txt,
-            emoji: EMOJI[it.category] || '🎁',
+            emoji: iconOf(it.category),
             images: (it.images || []).map((u) => api.BASE_URL + u),
           };
         });

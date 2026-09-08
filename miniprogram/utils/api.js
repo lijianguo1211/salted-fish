@@ -31,19 +31,21 @@ function clearSession() {
 function request(path, { method = 'GET', data = {}, auth = true } = {}) {
   return new Promise((resolve, reject) => {
     const token = getToken();
-    const query = auth
-      ? `${path}${path.includes('?') ? '&' : '?'}token=${token}`
-      : path;
+    const header = { 'Content-Type': 'application/json' };
+    let url = BASE_URL + path;
+    if (auth && token) {
+      header.Authorization = `Bearer ${token}`;
+      url += `${path.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
+    }
     wx.request({
-      url: BASE_URL + query,
+      url,
       method,
       data,
-      header: { 'Content-Type': 'application/json' },
+      header,
       success(res) {
         if (res.statusCode === 401) {
           clearSession();
-          // 需要重新登录
-          wx.navigateTo({ url: '/pages/index/index?needLogin=1' });
+          wx.redirectTo({ url: '/pages/login/login' });
           reject(res.data);
           return;
         }
@@ -63,14 +65,26 @@ function request(path, { method = 'GET', data = {}, auth = true } = {}) {
 // 上传图片（本地临时路径 -> 服务器 URL）
 function uploadFile(filePath) {
   return new Promise((resolve, reject) => {
+    const token = getToken();
     wx.uploadFile({
-      url: BASE_URL + '/upload',
+      url: BASE_URL + '/upload' + (token ? `?token=${encodeURIComponent(token)}` : ''),
       filePath,
       name: 'file',
-      header: { token: getToken() },
+      header: token ? { Authorization: `Bearer ${token}` } : {},
       success(res) {
+        if (res.statusCode === 401) {
+          clearSession();
+          wx.redirectTo({ url: '/pages/login/login' });
+          reject(res.data || { detail: '请先登录' });
+          return;
+        }
         if (res.statusCode >= 400) {
-          reject({ detail: '上传失败' });
+          let detail = '上传失败';
+          try {
+            const data = JSON.parse(res.data);
+            if (data && data.detail) detail = data.detail;
+          } catch (e) { /* ignore */ }
+          reject({ detail });
           return;
         }
         try {

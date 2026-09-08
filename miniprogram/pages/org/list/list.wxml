@@ -1,7 +1,8 @@
 <view class="tab-page">
   <view class="card tip" wx:if="{{!activeOrgId}}">
-    <view class="title">先加入一个组织</view>
-    <view class="muted">鱼塘按小区/学校隔离。请申请创建，或输入邀请码加入。</view>
+    <view class="title">{{isMemberPath ? '等待加入组织' : '组织进度'}}</view>
+    <view class="muted" wx:if="{{isMemberPath}}">邀请码已提交的话，请等组织管理员审核；通过后即可完善资料进鱼塘。</view>
+    <view class="muted" wx:else>创建申请需平台审核；通过后可邀请同学、管理成员。</view>
   </view>
 
   <view class="card" wx:if="{{activeMembers.length}}">
@@ -43,7 +44,7 @@
 
   <view class="actions">
     <button class="btn-primary" bindtap="goJoin">输入邀请码加入</button>
-    <button class="btn-outline" bindtap="goApply">申请创建组织</button>
-    <button class="btn-outline" wx:if="{{activeOrgId}}" bindtap="goFish">进入鱼塘</button>
+    <button class="btn-outline" wx:if="{{canCreate}}" bindtap="goApply">申请创建组织</button>
+    <button class="btn-outline" wx:if="{{activeOrgId}}" bindtap="goNext">继续</button>
   </view>
 </view>

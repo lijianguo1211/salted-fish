@@ -1,0 +1,24 @@
+<view class="gate-wrap">
+  <view class="gate-hero">
+    <view class="gate-title">你是怎么来的？</view>
+    <view class="gate-sub">选一条路就好，之后还可以在「我的组织」里切换</view>
+  </view>
+
+  <view class="gate-card" bindtap="chooseOrganizer">
+    <view class="gate-emoji">🏫</view>
+    <view class="gate-body">
+      <view class="gate-name">我是组织者</view>
+      <view class="gate-desc">老师 / 家委 / 家长 · 申请创建班级或小区组织，审核同学加入</view>
+    </view>
+    <text class="gate-arrow">›</text>
+  </view>
+
+  <view class="gate-card primary" bindtap="chooseMember">
+    <view class="gate-emoji">🎒</view>
+    <view class="gate-body">
+      <view class="gate-name">我是被邀请的</view>
+      <view class="gate-desc">小朋友 · 输入邀请码加入同学的组织，去鱼塘换闲置</view>
+    </view>
+    <text class="gate-arrow">›</text>
+  </view>
+</view>

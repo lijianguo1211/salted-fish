@@ -1,5 +1,12 @@
 <view class="tab-page">
   <view class="card">
+    <view class="title">创建额度</view>
+    <view class="muted">已用 {{quota.used}} / {{quota.limit}}（平台默认每人 {{quota.default_limit}} 个）</view>
+    <view class="muted" wx:if="{{!quota.can_create}}">额度已满。若确需管理更多班级/小区，请申请提额并上传证明。</view>
+    <button class="btn-outline" style="margin-top: 16rpx;" wx:if="{{!quota.can_create}}" bindtap="goQuota">申请提高额度</button>
+  </view>
+
+  <view class="card" wx:if="{{quota.can_create}}">
     <view class="title">组织信息</view>
     <view class="field">
       <view class="label">名称</view>
@@ -16,8 +23,8 @@
       <textarea placeholder="给平台审核看的补充说明" value="{{description}}" bindinput="onDesc" maxlength="500" />
     </view>
   </view>
-  <view class="muted tip">提交后需平台审核通过才能使用；通过后你将成为组织管理员，可邀请他人加入。</view>
-  <view class="actions">
+  <view class="muted tip" wx:if="{{quota.can_create}}">提交后需平台审核通过才能使用；通过后你将成为组织管理员，可邀请他人加入。</view>
+  <view class="actions" wx:if="{{quota.can_create}}">
     <button class="btn-primary" bindtap="submit">提交申请</button>
   </view>
 </view>

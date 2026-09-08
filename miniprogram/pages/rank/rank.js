@@ -9,15 +9,9 @@ Page({
   },
 
   onShow() {
+    const app = getApp();
+    if (!app.ensureReady()) return;
     const me = api.getUser();
-    if (!me) {
-      wx.redirectTo({ url: '/pages/login/login' });
-      return;
-    }
-    if (!me.active_org_id) {
-      wx.redirectTo({ url: '/pages/org/list/list' });
-      return;
-    }
     this.setData({ me });
     api
       .request('/coins/leaderboard')

@@ -1,0 +1,22 @@
+<view class="login-wrap">
+  <view class="logo">✏️</view>
+  <view class="login-title">完善宝贝资料</view>
+  <view class="login-sub">请填写真实信息，方便同学认出你；昵称、班级、学校均必填</view>
+
+  <view class="form">
+    <view class="field">
+      <text class="label">孩子昵称</text>
+      <input class="input" placeholder="请填写真实昵称" value="{{nickname}}" bindinput="onNickname" />
+    </view>
+    <view class="field">
+      <text class="label">班级</text>
+      <input class="input" placeholder="请填写真实班级，如三年级2班" value="{{gradeClass}}" bindinput="onGradeClass" />
+    </view>
+    <view class="field">
+      <text class="label">学校</text>
+      <input class="input" placeholder="请填写真实学校全称" value="{{school}}" bindinput="onSchool" />
+    </view>
+  </view>
+
+  <button class="btn-primary login-btn" bindtap="submit">完成，进入鱼塘</button>
+</view>

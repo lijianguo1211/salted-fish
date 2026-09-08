@@ -1,0 +1,27 @@
+<view class="tab-page">
+  <view class="card">
+    <view class="title">邀请同学加入「{{orgName}}」</view>
+    <view class="muted" wx:if="{{!inviteEnabled}}">组织已关闭邀请，暂不可邀请新同学加入。</view>
+    <view class="muted" wx:elif="{{!inviteCode}}">当前没有有效邀请码，请联系组织管理员换发。</view>
+    <view class="muted" wx:else>
+      点「发给微信好友」，对方打开卡片即可自动加入本组织。
+      <text wx:if="{{joinNeedReview}}">若开启了审核，对方会进入待审核。</text>
+      <text wx:else>当前免审，对方点开即可成为正式成员。</text>
+    </view>
+    <view class="code">{{inviteCode || '—'}}</view>
+    <view class="row" wx:if="{{inviteCode}}">
+      <button class="btn-outline mini" size="mini" bindtap="copyCode">复制邀请码</button>
+      <button class="btn-outline mini" size="mini" bindtap="copyShare">复制说明文案</button>
+    </view>
+    <button class="btn-primary" style="margin-top: 20rpx;" open-type="share" wx:if="{{inviteCode}}">发给微信好友（推荐）</button>
+  </view>
+
+  <view class="card" wx:if="{{inviteEnabled && inviteCode}}">
+    <view class="title">怎么邀请</view>
+    <view class="muted line">1. 点「发给微信好友」，分享带邀请码的小程序卡片</view>
+    <view class="muted line">2. 对方点开卡片 → 自动申请/加入本组织</view>
+    <view class="muted line" wx:if="{{joinNeedReview}}">3. 你在「组织管理」里通过申请后，对方就能进鱼塘</view>
+    <view class="muted line" wx:else>3. 免审已开：对方点开后直接成为正式成员</view>
+    <view class="muted line">也可只发邀请码，让对方手动输入（备用）。</view>
+  </view>
+</view>

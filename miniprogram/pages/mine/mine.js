@@ -1,9 +1,6 @@
 const api = require('../../utils/api.js');
 const app = getApp();
-const EMOJI = {
-  '奥特曼卡': '🃏', '绘本/课外书': '📚', '玩具': '🧸',
-  '文具': '✏️', '体育用品': '⚽', '其他': '🎁',
-};
+const { iconOf } = require('../../utils/category-icons.js');
 const ITEM_STATUS = { on_shelf: '上架中', off_shelf: '已下架', swapping: '交换中', swapped: '已换出' };
 
 Page({
@@ -18,15 +15,8 @@ Page({
   },
 
   onShow() {
+    if (!app.ensureReady()) return;
     const user = api.getUser();
-    if (!user) {
-      wx.redirectTo({ url: '/pages/login/login' });
-      return;
-    }
-    if (!user.active_org_id) {
-      wx.redirectTo({ url: '/pages/org/list/list' });
-      return;
-    }
     this.setData({ user, isOrgAdmin: false });
     this.refreshAll();
     this.loadMine();
@@ -49,9 +39,22 @@ Page({
     wx.navigateTo({ url: '/pages/org/list/list' });
   },
 
+  goInvite() {
+    if (!this.data.orgId) return;
+    wx.navigateTo({ url: `/pages/org/invite/invite?orgId=${this.data.orgId}` });
+  },
+
   goOrgManage() {
     if (!this.data.orgId) return;
     wx.navigateTo({ url: `/pages/org/manage/manage?orgId=${this.data.orgId}` });
+  },
+
+  goFish() {
+    wx.switchTab({ url: '/pages/index/index' });
+  },
+
+  goAichat() {
+    wx.navigateTo({ url: '/pages/aichat/aichat' });
   },
 
   refreshAll() {
@@ -70,7 +73,7 @@ Page({
         this.setData({
           myItems: (items || []).map((i) => ({
             ...i,
-            emoji: EMOJI[i.category] || '🎁',
+            emoji: iconOf(i.category),
             statusText: ITEM_STATUS[i.status] || i.status,
           })),
         });

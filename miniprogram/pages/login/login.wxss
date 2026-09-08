@@ -20,34 +20,125 @@
   color: #9A8F86;
   font-size: 26rpx;
   margin-top: 16rpx;
+  text-align: center;
 }
-.form {
+.steps {
   width: 100%;
-  margin-top: 70rpx;
+  margin-top: 72rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
 }
-.field {
-  margin-bottom: 24rpx;
-}
-.label {
-  display: block;
-  font-size: 26rpx;
-  color: #7B6E63;
-  margin-bottom: 12rpx;
-}
-.input {
+.step {
   background: #fff;
   border-radius: 16rpx;
-  padding: 24rpx 28rpx;
-  font-size: 30rpx;
-  border: 2rpx solid #F0E5D8;
+  padding: 22rpx 28rpx;
+  color: #8FA49C;
+  font-size: 28rpx;
+  border: 2rpx solid #E8F3EE;
+}
+.step.on {
+  color: #21473C;
+  font-weight: 600;
+  border-color: #54C7A5;
+  background: #F3FBF7;
 }
 .login-btn {
   width: 100%;
-  margin-top: 48rpx;
+  margin-top: 56rpx;
+}
+/* 协议勾选行 */
+.agree-row {
+  width: 100%;
+  margin-top: 28rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 0 8rpx;
+}
+.agree-box {
+  width: 36rpx;
+  height: 36rpx;
+  border: 2rpx solid #C9D6D0;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+.agree-box-on {
+  background: #54C7A5;
+  border-color: #54C7A5;
+}
+.agree-check {
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+.agree-text {
+  font-size: 24rpx;
+  color: #8FA49C;
+  line-height: 1.6;
+}
+.agree-link {
+  color: #2E86DE;
+}
+.agree-link-in {
+  color: #2E86DE;
+}
+/* 首登协议确认弹窗 */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-card {
+  width: 600rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx 36rpx 32rpx;
+  box-sizing: border-box;
+}
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #21473C;
+  text-align: center;
+}
+.modal-body {
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  color: #4A4A4A;
+  line-height: 1.7;
+}
+.modal-btns {
+  margin-top: 36rpx;
+  display: flex;
+  gap: 20rpx;
+}
+.modal-btn {
+  flex: 1;
+  font-size: 30rpx;
+  border-radius: 12rpx;
+}
+.modal-btn::after {
+  border: none;
+}
+.btn-ghost {
+  background: #54C7A5;
+  color: #fff;
 }
 .login-tip {
   margin-top: 32rpx;
   font-size: 24rpx;
   color: #B0A69C;
   text-align: center;
+  line-height: 1.5;
 }

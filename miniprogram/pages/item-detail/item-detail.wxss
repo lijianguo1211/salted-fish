@@ -28,6 +28,21 @@
 }
 .hero-num { font-size: 40rpx; font-weight: 800; color: #54C7A5; margin: 0 8rpx; }
 
+.value-row {
+  margin-top: 24rpx;
+  display: flex;
+  gap: 16rpx;
+}
+.value-cell {
+  flex: 1;
+  background: #F3FBF7;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+}
+.value-label { font-size: 22rpx; color: #8FA49C; }
+.value-num { font-size: 32rpx; font-weight: 800; color: #54C7A5; margin-top: 6rpx; }
+.value-hint { margin-top: 12rpx; font-size: 22rpx; color: #B0A69C; }
+
 .name-row { display: flex; align-items: center; justify-content: space-between; }
 .name { font-size: 36rpx; font-weight: 800; }
 .meta-row { color: #9A8F86; font-size: 26rpx; margin-top: 12rpx; }
@@ -113,3 +128,23 @@
 }
 .sheet-actions { display: flex; gap: 16rpx; margin-top: 28rpx; }
 .sheet-actions .btn-outline, .sheet-actions .btn-primary { flex: 1; }
+
+/* AI 换物撮合建议 */
+.ai-mini-btn {
+  background: #54C7A5; color: #fff; font-size: 24rpx;
+  padding: 10rpx 24rpx; border-radius: 999rpx;
+}
+.ai-mini-btn.ai-loading { background: #C7DCD5; }
+.ai-advice {
+  margin-top: 20rpx; color: #2B4A42; font-size: 28rpx;
+  background: #F0FBF7; border-radius: 14rpx; padding: 18rpx 20rpx; line-height: 1.6;
+}
+.ai-sugs { margin-top: 16rpx; }
+.sug-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #EAF8F3; border-radius: 14rpx; padding: 16rpx 20rpx; margin-bottom: 12rpx;
+}
+.sug-info { flex: 1; margin-right: 16rpx; }
+.sug-name { font-size: 28rpx; font-weight: 600; color: #2B4A42; }
+.sug-reason { font-size: 24rpx; line-height: 1.5; margin-top: 4rpx; }
+.sug-match { font-size: 32rpx; font-weight: 800; color: #54C7A5; }

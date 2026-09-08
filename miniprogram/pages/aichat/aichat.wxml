@@ -1,0 +1,27 @@
+<view class="aichat-page">
+  <!-- 快捷问题 -->
+  <view class="quick" wx:if="{{!messages.length}}">
+    <view class="quick-title">💡 你可以问我：</view>
+    <view class="quick-item" wx:for="{{quickQuestions}}" wx:key="*this"
+          bindtap="useQuick" data-q="{{item}}">{{item}}</view>
+  </view>
+
+  <!-- 对话流 -->
+  <view class="msg-list" id="msgScroll" wx:if="{{messages.length}}">
+    <view wx:for="{{messages}}" wx:key="index"
+          class="msg {{item.role === 'user' ? 'msg-me' : 'msg-ai'}}">
+      <view class="bubble">{{item.content}}</view>
+    </view>
+    <view class="msg msg-ai" wx:if="{{loading}}">
+      <view class="bubble typing">思考中…</view>
+    </view>
+  </view>
+
+  <!-- 输入区 -->
+  <view class="input-bar">
+    <input class="chat-input" placeholder="输入你的问题…" value="{{input}}"
+           bindinput="onInput" confirm-type="send" bindconfirm="send" />
+    <button class="send-btn" loading="{{loading}}" disabled="{{loading}}"
+            bindtap="send">发送</button>
+  </view>
+</view>

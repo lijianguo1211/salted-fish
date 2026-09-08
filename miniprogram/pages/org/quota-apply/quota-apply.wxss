@@ -1,0 +1,36 @@
+.proof-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+.proof {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  position: relative;
+  background: #EEF2F0;
+}
+.proof image { width: 100%; height: 100%; }
+.proof.add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56rpx;
+  color: #54C7A5;
+  border: 2rpx dashed #54C7A5;
+  background: #F3FBF7;
+}
+.proof-del {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44rpx;
+  height: 44rpx;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  text-align: center;
+  line-height: 44rpx;
+  font-size: 28rpx;
+}

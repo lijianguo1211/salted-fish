@@ -1,10 +1,16 @@
 <view class="tab-page">
-  <view class="card">
-    <view class="title">输入邀请码</view>
-    <view class="muted">向组织管理员索取邀请码，提交后等待对方审核。</view>
-    <input class="code-input" placeholder="例如 DEMO2026" value="{{code}}" bindinput="onCode" maxlength="16" />
+  <view class="card" wx:if="{{fromLink && autoStatus==='joining'}}">
+    <view class="title">正在加入组织…</view>
+    <view class="muted">已识别邀请链接，正在为你自动加入。</view>
   </view>
-  <view class="actions">
-    <button class="btn-primary" bindtap="submit">申请加入</button>
+
+  <view class="card" wx:else>
+    <view class="title">{{fromLink ? '邀请链接加入' : '输入邀请码'}}</view>
+    <view class="muted" wx:if="{{fromLink}}">来自好友分享。若未自动加入，点下方按钮即可。</view>
+    <view class="muted" wx:else>向同学要邀请码，或让对方用「发给微信好友」分享链接给你。</view>
+    <input class="code-input" placeholder="请输入组织邀请码" value="{{code}}" bindinput="onCode" maxlength="16" />
+  </view>
+  <view class="actions" wx:if="{{autoStatus!=='joining'}}">
+    <button class="btn-primary" bindtap="submit">{{fromLink ? '确认加入' : '申请加入'}}</button>
   </view>
 </view>

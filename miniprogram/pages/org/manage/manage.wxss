@@ -2,9 +2,14 @@
   font-size: 44rpx; font-weight: 800; letter-spacing: 6rpx;
   text-align: center; padding: 24rpx 0; color: #54C7A5;
 }
-.row { display: flex; gap: 16rpx; justify-content: center; margin-bottom: 16rpx; }
+.row { display: flex; gap: 12rpx; justify-content: center; margin-bottom: 16rpx; flex-wrap: wrap; }
 .mini { padding: 0 20rpx !important; line-height: 56rpx !important; font-size: 24rpx !important; }
 .btn-primary.mini { display: inline-block; width: auto; padding: 0 24rpx !important; }
+.switch-row {
+  display: flex; align-items: center; gap: 16rpx;
+  padding: 20rpx 0; border-bottom: 1rpx solid #E8F3EE;
+}
+.switch-row:last-child { border-bottom: none; }
 .mem-row {
   display: flex; align-items: center; gap: 12rpx;
   padding: 20rpx 0; border-bottom: 1rpx solid #E8F3EE;

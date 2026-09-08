@@ -3,7 +3,7 @@
   <view class="header">
     <view class="header-top">
       <view>
-        <view class="hi">👋 你好，{{user?user.nickname:'小咸鱼'}}</view>
+        <view class="hi">👋 你好，{{helloName}}</view>
         <view class="hi-sub org-switch" bindtap="goOrgs">📍 {{orgName}} · 切换组织 ›</view>
       </view>
       <view class="coin-badge" wx:if="{{user}}">🐟 {{user.coin_balance}} 咸鱼币</view>

@@ -1,5 +1,11 @@
 <view class="tab-page">
-  <!-- 我的信息卡 -->
+  <view class="card admin-home" wx:if="{{isOrgAdmin}}">
+    <view class="title">组织管理台</view>
+    <view class="muted">你是当前组织的管理员，可审成员、管邀请、下架闲置。</view>
+    <button class="btn-primary" style="margin-top: 20rpx;" bindtap="goOrgManage">进入组织管理</button>
+    <button class="btn-outline" style="margin-top: 16rpx;" bindtap="goFish">去鱼塘看看</button>
+  </view>
+
   <view class="profile">
     <view class="avatar big">{{user.avatar || '🙂'}}</view>
     <view class="p-info">
@@ -13,20 +19,22 @@
     </view>
   </view>
 
-  <!-- 组织 -->
   <view class="card">
     <view class="title">🏘 我的组织</view>
     <view class="admin-entry" bindtap="goOrgs">
       <text>{{orgName || '选择 / 加入组织'}}</text>
       <text class="arrow">›</text>
     </view>
+    <view class="admin-entry" wx:if="{{orgId}}" bindtap="goInvite">
+      <text>邀请同学加入</text>
+      <text class="arrow">›</text>
+    </view>
     <view class="admin-entry" wx:if="{{isOrgAdmin}}" bindtap="goOrgManage">
-      <text>组织管理（邀请 / 审成员 / 下架）</text>
+      <text>组织管理（审成员 / 下架）</text>
       <text class="arrow">›</text>
     </view>
   </view>
 
-  <!-- 管理员入口（仅平台 admin） -->
   <view class="card" wx:if="{{user.is_admin}}">
     <view class="title">🛡️ 内容治理</view>
     <view class="admin-entry" bindtap="goAdmin">
@@ -35,8 +43,7 @@
     </view>
   </view>
 
-  <!-- 咸鱼币规则说明 -->
-  <view class="card">
+  <view class="card" wx:if="{{!isOrgAdmin}}">
     <view class="title">🐟 咸鱼币怎么得</view>
     <view class="rule-row" wx:for="{{rules}}" wx:key="action">
       <view class="rule-action">{{item.action}}</view>
@@ -45,7 +52,14 @@
     <view class="muted rule-note">咸鱼币是荣誉积分，不可兑换现金、不可购买商品；未来可兑换学校义卖的小文具（本子、笔、橡皮擦）。</view>
   </view>
 
-  <!-- 我的闲置 -->
+  <view class="card">
+    <view class="title">🤖 AI 小助手</view>
+    <view class="admin-entry" bindtap="goAichat">
+      <text>家长/老师常见问题，一键问答</text>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
   <view class="card">
     <view class="title">🎒 我的闲置</view>
     <view class="my-item" wx:for="{{myItems}}" wx:key="id" data-id="{{item.id}}" bindtap="goItem">
@@ -59,8 +73,7 @@
     <view wx:if="{{!myItems.length}}" class="m-empty">还没有上架闲置，去鱼塘上架第一件吧</view>
   </view>
 
-  <!-- 咸鱼币流水 -->
-  <view class="card" wx:if="{{ledger.length}}">
+  <view class="card" wx:if="{{ledger.length && !isOrgAdmin}}">
     <view class="title">📒 咸鱼币明细</view>
     <view class="ledger-row" wx:for="{{ledger}}" wx:key="id">
       <view class="l-info">

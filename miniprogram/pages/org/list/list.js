@@ -1,4 +1,5 @@
 const api = require('../../../utils/api.js');
+const entry = require('../../../utils/entry.js');
 const app = getApp();
 
 const ORG_TYPE = { school: '学校', community: '小区', other: '其他' };
@@ -11,6 +12,8 @@ Page({
     activeMembers: [],
     pendingMembers: [],
     created: [],
+    canCreate: false,
+    isMemberPath: false,
   },
 
   onShow() {
@@ -36,11 +39,20 @@ Page({
         ...o,
         statusText: STATUS[o.status] || o.status,
       }));
+
+      if (!activeMembers.length && !pendingMembers.length && !created.length) {
+        wx.redirectTo({ url: '/pages/org/gate/gate' });
+        return;
+      }
+
+      const canCreate = entry.canCreateOrg({ created, activeMembers });
       this.setData({
         activeOrgId: res.active_org_id || 0,
         activeMembers,
         pendingMembers,
         created,
+        canCreate,
+        isMemberPath: entry.getIntent() === 'member' && !canCreate,
       });
     }).catch((err) => {
       wx.showToast({ title: (err && err.detail) || '加载失败', icon: 'none' });
@@ -50,7 +62,7 @@ Page({
   switchOrg(e) {
     const id = e.currentTarget.dataset.id;
     if (id === this.data.activeOrgId) {
-      this.goFish();
+      this.goNext();
       return;
     }
     wx.showLoading({ title: '切换中...' });
@@ -60,7 +72,7 @@ Page({
         api.setSession(api.getToken(), u);
         app.globalData.user = u;
         wx.hideLoading();
-        wx.switchTab({ url: '/pages/index/index' });
+        app.routeAfterAuth(u);
       })
       .catch((err) => {
         wx.hideLoading();
@@ -80,7 +92,16 @@ Page({
     }
   },
 
-  goApply() { wx.navigateTo({ url: '/pages/org/apply/apply' }); },
-  goJoin() { wx.navigateTo({ url: '/pages/org/join/join' }); },
-  goFish() { wx.switchTab({ url: '/pages/index/index' }); },
+  goApply() {
+    entry.setIntent('organizer');
+    wx.navigateTo({ url: '/pages/org/apply/apply' });
+  },
+  goJoin() {
+    entry.setIntent('member');
+    wx.navigateTo({ url: '/pages/org/join/join' });
+  },
+  goNext() {
+    const user = api.getUser() || app.globalData.user;
+    app.routeAfterAuth(user);
+  },
 });

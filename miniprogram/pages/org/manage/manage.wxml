@@ -1,15 +1,41 @@
 <view class="tab-page">
   <view class="card">
-    <view class="title">邀请码</view>
-    <view class="code">{{inviteCode || '—'}}</view>
-    <view class="row">
-      <button class="btn-outline mini" size="mini" bindtap="copyCode">复制</button>
-      <button class="btn-outline mini" size="mini" bindtap="refreshCode">刷新邀请码</button>
-    </view>
-    <view class="muted">仅邀请码可加入；对方提交后需你在下方审核。</view>
+    <view class="title">组织管理台</view>
+    <view class="muted">审成员、管邀请、下架本组织闲置。也可去鱼塘和同学一起换。</view>
+    <button class="btn-outline" style="margin-top: 20rpx;" bindtap="goFish">进入鱼塘</button>
   </view>
 
   <view class="card">
+    <view class="title">邀请设置</view>
+    <view class="switch-row">
+      <view class="grow">
+        <view class="org-name">允许邀请加入</view>
+        <view class="muted">关闭后禁止任何人用邀请码加入</view>
+      </view>
+      <switch checked="{{inviteEnabled}}" bindchange="onInviteEnabled" color="#54C7A5" />
+    </view>
+    <view class="switch-row">
+      <view class="grow">
+        <view class="org-name">加入需审核</view>
+        <view class="muted">关闭后输入邀请码即可直接成为正式成员</view>
+      </view>
+      <switch checked="{{joinNeedReview}}" bindchange="onJoinNeedReview" color="#54C7A5" />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">邀请码</view>
+    <view class="code">{{inviteCode || (inviteEnabled ? '暂无有效码' : '已关闭邀请')}}</view>
+    <view class="row">
+      <button class="btn-outline mini" size="mini" bindtap="copyCode" disabled="{{!inviteCode}}">复制</button>
+      <button class="btn-outline mini" size="mini" bindtap="refreshCode">换发新码</button>
+      <button class="btn-danger mini" size="mini" bindtap="invalidateCode" disabled="{{!inviteCode}}">使码失效</button>
+    </view>
+    <button class="btn-primary" style="margin-top: 20rpx;" open-type="share" wx:if="{{inviteCode && inviteEnabled}}">发给微信好友（点开即加入）</button>
+    <view class="muted" style="margin-top: 12rpx;">换发后旧码立即失效。好友点开分享卡片会自动带上邀请码；关闭「加入需审核」后可直接成为正式成员。</view>
+  </view>
+
+  <view class="card" wx:if="{{joinNeedReview}}">
     <view class="title">待审核成员</view>
     <view class="mem-row" wx:for="{{pending}}" wx:key="id">
       <view class="grow">

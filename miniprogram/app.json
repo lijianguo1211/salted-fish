@@ -1,7 +1,9 @@
 {
   "pages": [
     "pages/login/login",
+    "pages/org/gate/gate",
     "pages/org/list/list",
+    "pages/profile/setup",
     "pages/index/index",
     "pages/swap-list/swap-list",
     "pages/rank/rank",
@@ -10,9 +12,14 @@
     "pages/item-detail/item-detail",
     "pages/swap-detail/swap-detail",
     "pages/org/apply/apply",
+    "pages/org/quota-apply/quota-apply",
     "pages/org/join/join",
     "pages/org/manage/manage",
-    "pages/admin/admin"
+    "pages/org/invite/invite",
+    "pages/admin/admin",
+    "pages/aichat/aichat",
+    "pages/legal/agree",
+    "pages/legal/privacy"
   ],
   "window": {
     "navigationBarBackgroundColor": "#54C7A5",

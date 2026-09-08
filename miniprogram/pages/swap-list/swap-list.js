@@ -1,8 +1,5 @@
 const api = require('../../utils/api.js');
-const EMOJI = {
-  '奥特曼卡': '🃏', '绘本/课外书': '📚', '玩具': '🧸',
-  '文具': '✏️', '体育用品': '⚽', '其他': '🎁',
-};
+const { iconOf } = require('../../utils/category-icons.js');
 const STATUS_TEXT = {
   pending_parent: '等待发起方家长确认',
   pending_peer: '等待接收方家长确认',
@@ -20,15 +17,9 @@ Page({
   },
 
   onShow() {
+    const app = getApp();
+    if (!app.ensureReady()) return;
     const user = api.getUser();
-    if (!user) {
-      wx.redirectTo({ url: '/pages/login/login' });
-      return;
-    }
-    if (!user.active_org_id) {
-      wx.redirectTo({ url: '/pages/org/list/list' });
-      return;
-    }
     this.setData({ user });
     this.load();
   },
@@ -77,8 +68,8 @@ Page({
     return {
       ...s,
       mySide,
-      initiator_item: { ...ii, emoji: EMOJI[ii.category] || '🎁' },
-      receiver_item: { ...ri, emoji: EMOJI[ri.category] || '🎁' },
+      initiator_item: { ...ii, emoji: iconOf(ii.category) },
+      receiver_item: { ...ri, emoji: iconOf(ri.category) },
       initiator_ok,
       receiver_ok: receiverOk,
       statusText: STATUS_TEXT[s.status] || s.status,

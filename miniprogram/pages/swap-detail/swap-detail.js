@@ -1,8 +1,5 @@
 const api = require('../../utils/api.js');
-const EMOJI = {
-  '奥特曼卡': '🃏', '绘本/课外书': '📚', '玩具': '🧸',
-  '文具': '✏️', '体育用品': '⚽', '其他': '🎁',
-};
+const { iconOf } = require('../../utils/category-icons.js');
 const STATUS_TEXT = {
   pending_parent: '等待发起方家长确认',
   pending_peer: '等待接收方家长确认',
@@ -34,8 +31,8 @@ Page({
 
         const swap = {
           ...s,
-          initiator_item: { ...s.initiator_item, emoji: EMOJI[s.initiator_item.category] || '🎁' },
-          receiver_item: { ...s.receiver_item, emoji: EMOJI[s.receiver_item.category] || '🎁' },
+          initiator_item: { ...s.initiator_item, emoji: iconOf(s.initiator_item.category) },
+          receiver_item: { ...s.receiver_item, emoji: iconOf(s.receiver_item.category) },
           mySide,
           statusText: STATUS_TEXT[s.status] || s.status,
           needMyConfirm: activeStatus && !myConfirmed,

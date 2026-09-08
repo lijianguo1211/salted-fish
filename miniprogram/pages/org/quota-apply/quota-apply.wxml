@@ -1,0 +1,38 @@
+<view class="tab-page">
+  <view class="card">
+    <view class="title">为什么需要提额？</view>
+    <view class="muted">平台默认每人可创建 {{quota.default_limit}} 个组织，避免滥建。若你是老师/家委需管理多个班级或小区，请说明场景并上传证明。</view>
+    <view class="muted" style="margin-top: 8rpx;">当前额度 {{quota.limit}}，已用 {{quota.used}}。</view>
+  </view>
+
+  <view class="card">
+    <view class="field">
+      <view class="label">希望提高到（个）</view>
+      <input type="number" placeholder="例如 5" value="{{requestedLimit}}" bindinput="onLimit" />
+    </view>
+    <view class="field">
+      <view class="label">原因说明（必填，至少 20 字）</view>
+      <textarea
+        placeholder="例如：本人为阳光小学三年级班主任，需分别为 1 班、2 班、兴趣社创建组织，方便班级内以物换物管理。"
+        value="{{reason}}"
+        bindinput="onReason"
+        maxlength="1000"
+      />
+    </view>
+    <view class="field">
+      <view class="label">证明材料（必填，如教师资格证）</view>
+      <view class="proof-row">
+        <view class="proof" wx:for="{{proofs}}" wx:key="*this">
+          <image src="{{item}}" mode="aspectFill" />
+          <view class="proof-del" data-i="{{index}}" bindtap="delProof">×</view>
+        </view>
+        <view class="proof add" bindtap="addProof" wx:if="{{proofs.length < 5}}">+</view>
+      </view>
+      <view class="muted">最多 5 张，请拍摄证件清晰面，仅用于平台审核。</view>
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="btn-primary" bindtap="submit">提交提额申请</button>
+  </view>
+</view>

@@ -6,7 +6,7 @@
     <view class="hero-coin">
       <text>🐟</text>
       <text class="hero-num">{{item.value_coins}}</text>
-      <text>咸鱼币参考</text>
+      <text>物主估值</text>
     </view>
   </view>
 
@@ -18,6 +18,17 @@
     <view class="meta-row">
       <text>👤 {{item.owner}} · {{item.owner_class}}</text>
     </view>
+    <view class="value-row">
+      <view class="value-cell">
+        <view class="value-label">物主估值</view>
+        <view class="value-num">🐟 {{item.value_coins}}</view>
+      </view>
+      <view class="value-cell" wx:if="{{item.ai_value_coins}}">
+        <view class="value-label">AI 估值</view>
+        <view class="value-num">🐟 {{item.ai_value_coins}}</view>
+      </view>
+    </view>
+    <view class="muted value-hint">咸鱼币只是交换参考，不是钱</view>
     <view class="want">
       <view class="want-label">想换</view>
       <view class="want-tags">
@@ -28,12 +39,33 @@
     <view class="desc" wx:if="{{item.description}}">{{item.description}}</view>
   </view>
 
+  <!-- AI 换物撮合建议 -->
+  <view class="card" wx:if="{{!isMine}}">
+    <view class="name-row">
+      <view class="name">🤖 AI 换物建议</view>
+      <view class="ai-mini-btn" wx:if="{{!aiMatchLoading}}" bindtap="aiSwapAdvice">试试撮合</view>
+      <view class="ai-mini-btn ai-loading" wx:else>思考中…</view>
+    </view>
+    <view class="ai-advice" wx:if="{{aiAdvice}}">{{aiAdvice}}</view>
+    <view class="ai-sugs" wx:if="{{aiSuggestions.length}}">
+      <view class="sug-item" wx:for="{{aiSuggestions}}" wx:key="id"
+            bindtap="aiUseSuggestion" data-id="{{item.id}}">
+        <view class="sug-info">
+          <view class="sug-name">用「{{item.name}}」换</view>
+          <view class="muted sug-reason">{{item.reason}}</view>
+        </view>
+        <view class="sug-match">{{item.match}}%</view>
+      </view>
+    </view>
+    <view class="muted tip">AI 只做参考，交换公平与否最终由双方家长确认</view>
+  </view>
+
   <!-- 底部操作 -->
   <view class="action-bar">
     <button wx:if="{{!isMine}}" class="btn-primary" bindtap="openSwap">用我的宝贝换这个</button>
     <button wx:if="{{!isMine}}" class="btn-report" bindtap="openReport">❗举报</button>
     <view wx:if="{{isMine}}" class="mine-actions">
-      <button class="btn-edit" bindtap="openEditValue">改价值 🐟{{item.value_coins}}</button>
+      <button class="btn-edit" bindtap="openEditValue">改我的估值 🐟{{item.value_coins}}</button>
       <button class="btn-danger" bindtap="removeItem">下架</button>
     </view>
   </view>
@@ -41,13 +73,14 @@
   <!-- 修改价值弹层 -->
   <view class="mask" wx:if="{{showEditValue}}" bindtap="closeEditValue">
     <view class="sheet sheet-center" catchtap="noop">
-      <view class="sheet-title">调整这件闲置的价值</view>
+      <view class="sheet-title">调整我自己估的价值</view>
       <view class="ev-stepper">
         <button class="ev-btn" bindtap="evDec">−</button>
         <view class="ev-num">🐟 {{editCoins}}</view>
         <button class="ev-btn" bindtap="evInc">＋</button>
       </view>
-      <view class="ev-hint">咸鱼币是参考价值，不能超过 15 枚。匹配时可凭此找到差不多的交换。</view>
+      <view class="ev-hint" wx:if="{{item.ai_value_coins}}">AI 估了 {{item.ai_value_coins}} 枚，可对照参考。这是荣誉积分，不是价格。</view>
+      <view class="ev-hint" wx:else>咸鱼币是参考价值，不能超过 15 枚，不是价格。</view>
       <view class="sheet-actions">
         <button class="btn-outline" bindtap="closeEditValue">取消</button>
         <button class="btn-primary" bindtap="saveValue">保存</button>

@@ -1,5 +1,6 @@
 .publish-page { padding-bottom: 160rpx; box-sizing: border-box; }
 .title { font-size: 32rpx; }
+.title-gap { margin-top: 24rpx; }
 .input {
   margin-top: 18rpx;
   background: #EAF8F3;
@@ -15,6 +16,12 @@
   font-size: 28rpx;
   color: #46635A;
 }
+.ai-fill-row { display: flex; align-items: center; margin-top: 18rpx; }
+.ai-fill-btn {
+  background: #54C7A5; color: #fff; font-size: 24rpx;
+  padding: 4rpx 8rpx; border-radius: 30rpx; margin: 0;
+}
+.ai-fill-tip { margin-left: 16rpx; font-size: 24rpx; }
 .conditions { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
 .cond {
   padding: 12rpx 24rpx;

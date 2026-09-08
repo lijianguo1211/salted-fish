@@ -3,21 +3,45 @@
   <view class="login-title">咸鱼小市场</view>
   <view class="login-sub">让闲置游起来 · 以物换物 · 家长双确认</view>
 
-  <view class="form">
-    <view class="field">
-      <text class="label">我家孩子的昵称</text>
-      <input class="input" placeholder="例如：小豆豆" value="{{nickname}}" bindinput="onNickname" />
+  <view class="steps">
+    <view class="step on">1. 微信登录</view>
+    <view class="step">2. 选身份 / 进组织</view>
+    <view class="step">3. 完善资料</view>
+  </view>
+
+  <button class="btn-primary login-btn" bindtap="doWechatLogin">微信授权登录</button>
+
+  <!-- 协议/隐私 勾选行 -->
+  <view class="agree-row" bindtap="toggleAgree">
+    <view class="agree-box {{agreed ? 'agree-box-on' : ''}}">
+      <view class="agree-check" wx:if="{{agreed}}">✓</view>
     </view>
-    <view class="field">
-      <text class="label">班级</text>
-      <input class="input" placeholder="例如：三年级2班" value="{{gradeClass}}" bindinput="onGradeClass" />
-    </view>
-    <view class="field">
-      <text class="label">学校</text>
-      <input class="input" placeholder="例如：示范小学" value="{{school}}" bindinput="onSchool" />
+    <view class="agree-text">
+      我已阅读并同意
+      <text class="agree-link" catchtap="openUserAgree">《用户协议》</text>与
+      <text class="agree-link" catchtap="openPrivacy">《隐私政策》</text>
     </view>
   </view>
 
-  <button class="btn-primary login-btn" bindtap="doLogin">进入鱼塘</button>
-  <view class="login-tip">演示模式：无需真实微信授权，输入昵称即完成注册</view>
+  <view class="login-tip">
+    {{realLogin
+      ? '将使用微信账号安全登录，登录后再加入组织并完善资料。'
+      : '将先完成登录授权，再加入组织并完善资料。'}}
+  </view>
+
+  <!-- 首登：用户协议/隐私政策 确认弹窗 -->
+  <view class="modal-mask" wx:if="{{showAgreeModal}}" catchtouchmove="noop">
+    <view class="modal-card">
+      <view class="modal-title">协议确认</view>
+      <view class="modal-body">
+        在使用「咸鱼小市场」前，请阅读并同意
+        <text class="agree-link-in" bindtap="openUserAgree">《用户协议》</text>与
+        <text class="agree-link-in" bindtap="openPrivacy">《隐私政策》</text>。
+        我们仅收集实现功能所必需的信息，并恪守未成年人信息保护相关规定。
+      </view>
+      <view class="modal-btns">
+        <button class="modal-btn btn-ghost" bindtap="confirmModalAgree">同意并继续</button>
+      </view>
+    </view>
+  </view>
 </view>

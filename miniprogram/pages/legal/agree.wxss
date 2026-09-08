@@ -1,0 +1,33 @@
+.legal-page {
+  padding: 40rpx 40rpx 80rpx;
+  background: #fff;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.legal-title {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #21473C;
+  text-align: center;
+}
+.legal-update {
+  font-size: 24rpx;
+  color: #B0A69C;
+  text-align: center;
+  margin: 16rpx 0 32rpx;
+}
+.legal-block {
+  margin-bottom: 36rpx;
+}
+.block-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #21473C;
+  margin-bottom: 16rpx;
+}
+.block-text {
+  font-size: 28rpx;
+  color: #4A4A4A;
+  line-height: 1.7;
+  margin-bottom: 12rpx;
+}

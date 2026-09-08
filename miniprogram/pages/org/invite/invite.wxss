@@ -1,0 +1,8 @@
+.code {
+  font-size: 48rpx; font-weight: 800; letter-spacing: 6rpx;
+  text-align: center; padding: 32rpx 0; color: #54C7A5;
+}
+.row { display: flex; gap: 16rpx; justify-content: center; flex-wrap: wrap; }
+.mini { padding: 0 24rpx !important; line-height: 56rpx !important; font-size: 24rpx !important; }
+.btn-primary.mini { display: inline-block; width: auto; }
+.line { margin-top: 12rpx; line-height: 1.6; }

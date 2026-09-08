@@ -2,7 +2,7 @@
 
 两级推理：
 1. **视觉大模型（可选）** —— 从数据库读取多条启用的 LLM 配置，按优先级
-   依次调用 OpenAI 兼容 /chat/completions；全部失败再回退规则引擎。
+   用 OpenAI SDK 调用兼容网关；全部失败再回退规则引擎。
    无数据库配置时兼容 .env 单 Key。
 2. **规则引擎（兜底）**：关键词 + 新旧折减系数，可解释、零成本、离线可跑。
 
@@ -23,17 +23,11 @@ from ..config import (
     UPLOAD_DIR,
 )
 from ..services import llm_service
+from ..services.category_service import fallback_map
 
 logger = logging.getLogger("salted_fish.ai_pricing")
 
-_FALLBACK_CATEGORIES = {
-    "奥特曼卡": (3, "卡面磨损、卡位稀有度影响估值"),
-    "绘本/课外书": (4, "缺页、涂鸦、书脊破损影响估值"),
-    "玩具": (3, "配件齐全度、功能完好度影响估值"),
-    "文具": (2, "消耗程度影响估值"),
-    "体育用品": (4, "使用痕迹影响估值"),
-    "其他": (2, "按类别参照，建议交换中人工补照片"),
-}
+_FALLBACK_CATEGORIES = fallback_map()
 
 _KEYWORDS = list(_FALLBACK_CATEGORIES)
 
@@ -125,27 +119,13 @@ def _build_content_parts(image_urls) -> list | None:
     return content_parts
 
 
-def _call_one_endpoint(endpoint: dict, content_parts: list) -> dict:
-    import httpx
-
-    url = f"{endpoint['base_url']}/chat/completions"
-    payload = {
-        "model": endpoint["model"],
-        "messages": [{"role": "user", "content": content_parts}],
-        "temperature": 0.2,
-        "response_format": {"type": "json_object"},
-    }
-    r = httpx.post(
-        url,
-        headers={
-            "Authorization": f"Bearer {endpoint['api_key']}",
-            "Content-Type": "application/json",
-        },
-        json=payload,
-        timeout=endpoint.get("timeout_sec") or 30,
+async def _call_one_endpoint(endpoint: dict, content_parts: list) -> dict:
+    text = await llm_service.chat_complete(
+        endpoint,
+        messages=[{"role": "user", "content": content_parts}],
+        temperature=0.2,
+        response_format={"type": "json_object"},
     )
-    r.raise_for_status()
-    text = r.json()["choices"][0]["message"]["content"]
     obj = _parse_json_reply(text)
     coins = int(obj.get("coins", 0))
     coins = max(COIN_MIN, min(COIN_MAX, coins))
@@ -165,7 +145,7 @@ def _call_one_endpoint(endpoint: dict, content_parts: list) -> dict:
     }
 
 
-def _visual_estimate(image_urls, db: Session | None = None) -> dict | None:
+async def _visual_estimate(image_urls, db: Session | None = None) -> dict | None:
     content_parts = _build_content_parts(image_urls)
     if not content_parts:
         return None
@@ -175,13 +155,17 @@ def _visual_estimate(image_urls, db: Session | None = None) -> dict | None:
         db = SessionLocal()
         own_db = True
     try:
-        endpoints = llm_service.active_endpoints(db)
+        endpoints = [
+            ep for ep in llm_service.active_endpoints(db)
+            if ep.get("support_image", True)  # 仅挑选声明支持图像/多模态输入的模型
+        ]
         if not endpoints:
+            logger.warning("无可用的支持图像输入的 LLM 配置，回退规则引擎")
             return None
         last_err = None
         for ep in endpoints:
             try:
-                result = _call_one_endpoint(ep, content_parts)
+                result = await _call_one_endpoint(ep, content_parts)
                 llm_service.mark_success(db, ep.get("id") or 0)
                 result.pop("_provider_id", None)
                 return result
@@ -213,37 +197,22 @@ def _parse_json_reply(text: str) -> dict:
     return {}
 
 
-def estimate_value(name, category, description, condition, image_urls=None,
-                   categories=None, db: Session | None = None):
+async def estimate_value(name, category, description, condition, image_urls=None,
+                         categories=None, db: Session | None = None):
     """统一入口。image_urls 若提供且有可用 LLM，则优先视觉识别。"""
     if image_urls:
-        vision = _visual_estimate(image_urls, db=db)
+        vision = await _visual_estimate(image_urls, db=db)
         if vision and vision["suggested_coins"]:
             return vision
     return _rule_estimate(name, category, description, condition, categories)
 
 
-def probe_endpoint(endpoint: dict) -> dict:
+async def probe_endpoint(endpoint: dict) -> dict:
     """连通性探测：发一条极简文本请求，不要求视觉。"""
-    import httpx
-
-    url = f"{endpoint['base_url'].rstrip('/')}/chat/completions"
-    payload = {
-        "model": endpoint["model"],
-        "messages": [{"role": "user", "content": "回复一个字：好"}],
-        "temperature": 0,
-        "max_tokens": 8,
-    }
-    r = httpx.post(
-        url,
-        headers={
-            "Authorization": f"Bearer {endpoint['api_key']}",
-            "Content-Type": "application/json",
-        },
-        json=payload,
-        timeout=endpoint.get("timeout_sec") or 30,
+    content = await llm_service.chat_complete(
+        endpoint,
+        messages=[{"role": "user", "content": "回复一个字：好"}],
+        temperature=0,
+        max_tokens=8,
     )
-    r.raise_for_status()
-    data = r.json()
-    content = data["choices"][0]["message"]["content"]
     return {"ok": True, "reply": str(content)[:80]}

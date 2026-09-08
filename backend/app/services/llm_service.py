@@ -1,6 +1,7 @@
 """大模型配置：多厂商 / 多 Key，按优先级故障切换。"""
 from datetime import datetime
 
+from openai import AsyncOpenAI
 from sqlalchemy.orm import Session
 
 from ..config import (
@@ -42,7 +43,12 @@ def list_providers(db: Session, *, active_only: bool = False) -> list[LlmProvide
 
 
 def active_endpoints(db: Session) -> list[dict]:
-    """返回可调用的 endpoint 列表（DB 优先；无启用项时回退 .env）。"""
+    """返回可调用的 endpoint 列表。
+
+    优先级：
+      1) 数据库 llm_providers（admin-web「大模型管理」启用的配置）
+      2) 若库里没有任何启用项，才回退 .env 的 AI_VISION_*（遗留兼容）
+    """
     rows = [p for p in list_providers(db, active_only=True) if p.api_key and p.base_url]
     if rows:
         return [
@@ -54,10 +60,13 @@ def active_endpoints(db: Session) -> list[dict]:
                 "api_key": p.api_key,
                 "model": p.model,
                 "timeout_sec": p.timeout_sec or 30,
+                "support_text": p.support_text if p.support_text is not None else True,
+                "support_image": p.support_image if p.support_image is not None else True,
+                "support_audio": p.support_audio if p.support_audio is not None else False,
             }
             for p in rows
         ]
-    # 兼容旧 .env 单 Key
+    # 遗留：仅当数据库无任何启用模型时，才用 .env 单 Key
     if AI_VISION_ENABLED and AI_VISION_API_KEY:
         return [
             {
@@ -68,9 +77,43 @@ def active_endpoints(db: Session) -> list[dict]:
                 "api_key": AI_VISION_API_KEY,
                 "model": AI_VISION_MODEL,
                 "timeout_sec": 30,
+                "support_text": True,
+                "support_image": True,   # .env 视觉 Key 视为支持图像
+                "support_audio": False,
             }
         ]
     return []
+
+
+def make_client(endpoint: dict) -> AsyncOpenAI:
+    """OpenAI 兼容网关异步客户端（自定义 base_url / timeout）。"""
+    return AsyncOpenAI(
+        api_key=endpoint["api_key"],
+        base_url=endpoint["base_url"].rstrip("/"),
+        timeout=endpoint.get("timeout_sec") or 30,
+    )
+
+
+async def chat_complete(
+    endpoint: dict,
+    *,
+    messages: list,
+    temperature: float = 0.2,
+    response_format: dict | None = None,
+    max_tokens: int | None = None,
+) -> str:
+    kwargs: dict = {
+        "model": endpoint["model"],
+        "messages": messages,
+        "temperature": temperature,
+    }
+    if response_format is not None:
+        kwargs["response_format"] = response_format
+    if max_tokens is not None:
+        kwargs["max_tokens"] = max_tokens
+    async with make_client(endpoint) as client:
+        resp = await client.chat.completions.create(**kwargs)
+    return (resp.choices[0].message.content or "").strip()
 
 
 def mark_success(db: Session, provider_id: int) -> None:

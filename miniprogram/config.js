@@ -1,13 +1,12 @@
 // 全局配置
-// 端口必须与你后端实际监听端口一致（当前后端在 30089，看 backend/.env 的 SALTED_FISH_PORT）
-//  - 开发者工具模拟器：http://127.0.0.1:30089（当前用这个；后端 0.0.0.0 监听从本机可直连）
-//  - 真机/局域网：http://<本机局域网IP>:30089（真机联调时改回局域网 IP）
-const BASE_URL = 'http://127.0.0.1:30089';  // ← 当前在微信开发者工具里测，用本机地址
+// 生产：指向已备案/可访问的 HTTPS 后端域名（需在微信公众平台配置 request/uploadFile 合法域名）
+// 本地调试可临时改回：http://127.0.0.1:30089
+const BASE_URL = 'https://mini.program.lglg.xyz/api';
 const COIN_NAME = '咸鱼币';
 
 // true = 真实微信登录（wx.login 拿 code；需后端 SALTED_FISH_DEMO=0 + WECHAT_APPID）
 // false = 演示模式（本地设备 ID，不调微信）
-// 真机联调请保持 true
+// 线上/真机保持 true
 const REAL_LOGIN = true;
 
 // 腾讯云开发环境 ID（wx.cloud.extend.AI 必须在小程序云环境里调用）

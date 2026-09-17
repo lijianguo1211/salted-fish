@@ -7,6 +7,7 @@
 - Swap.both_confirm 完成时同步发币。
 """
 from datetime import datetime
+import json
 
 from sqlalchemy import (
     Boolean,
@@ -144,6 +145,83 @@ class Organization(TimestampMixin, Base):
             show = data["invite_enabled"] and bool(self.invite_code)
             data["invite_code"] = self.invite_code if show else ""
         return data
+
+
+class OrgQualification(TimestampMixin, Base):
+    """组织创建资质：提交材料，供平台人工复核与 AI 真伪预检。
+
+    material_type: teacher_certificate（学校组织必填）/ general_certificate / other
+    ai_status: not_checked / pending / passed / suspicious / failed
+    review_status: pending / approved / rejected
+    """
+
+    __tablename__ = "org_qualifications"
+    __table_args__ = (
+        UniqueConstraint("org_id", "user_id", name="uq_org_qualification_org_user"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    material_type = Column(String(32), default="general_certificate", index=True)
+    holder_name = Column(String(64), default="")
+    certificate_no = Column(String(64), default="")
+    issuing_organization = Column(String(128), default="")
+    issue_date = Column(String(32), default="")
+    material_urls = Column(Text, default="")
+    declaration = Column(Boolean, default=False)
+    ai_status = Column(String(16), default="not_checked", index=True)
+    ai_confidence = Column(Integer, default=0)
+    ai_checks = Column(Text, default="")
+    ai_reason = Column(String(255), default="")
+    ai_checked_at = Column(DateTime, nullable=True)
+    review_status = Column(String(16), default="pending", index=True)
+    review_reason = Column(String(255), default="")
+    reviewed_by = Column(Integer, default=0)
+    reviewed_at = Column(DateTime, nullable=True)
+
+    org = relationship("Organization", foreign_keys=[org_id])
+    user = relationship("User", foreign_keys=[user_id])
+
+    def material_list(self) -> list[str]:
+        return [u.strip() for u in (self.material_urls or "").split(",") if u.strip()]
+
+    def to_dict(self):
+        try:
+            checks = json.loads(self.ai_checks or "[]")
+            if not isinstance(checks, list):
+                checks = []
+        except Exception:
+            checks = []
+        return {
+            "id": self.id,
+            "org_id": self.org_id,
+            "org_name": self.org.name if self.org else "",
+            "user_id": self.user_id,
+            "nickname": self.user.nickname if self.user else "",
+            "material_type": self.material_type,
+            "holder_name": self.holder_name or "",
+            "certificate_no": self.certificate_no or "",
+            "issuing_organization": self.issuing_organization or "",
+            "issue_date": self.issue_date or "",
+            "material_urls": self.material_list(),
+            "declaration": bool(self.declaration),
+            "ai_status": self.ai_status or "not_checked",
+            "ai_confidence": self.ai_confidence or 0,
+            "ai_checks": checks,
+            "ai_reason": self.ai_reason or "",
+            "ai_checked_at": self.ai_checked_at.strftime("%Y-%m-%d %H:%M")
+            if self.ai_checked_at
+            else "",
+            "review_status": self.review_status,
+            "review_reason": self.review_reason or "",
+            "reviewed_at": self.reviewed_at.strftime("%Y-%m-%d %H:%M")
+            if self.reviewed_at
+            else "",
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
+            if self.created_at
+            else "",
+        }
 
 
 class OrgMembership(TimestampMixin, Base):
